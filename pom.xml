@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.soufinane</groupId>
-    <artifactId>test</artifactId>
+    <artifactId>Codex</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <properties>

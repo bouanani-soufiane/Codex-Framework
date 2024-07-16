@@ -14,7 +14,7 @@ Codex is a lightweight Java framework that provides dependency injection, custom
 ### Prerequisites
 
 - Java 8 or higher
-- Gradle
+- Maven
 
 ### Installation
 
