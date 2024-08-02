@@ -1,4 +1,4 @@
-package com.soufinane;
+package com.codex;
 
 import org.burningwave.core.assembler.ComponentContainer;
 import org.burningwave.core.assembler.ComponentSupplier;
@@ -12,7 +12,7 @@ public class Main {
         Collection<Class<?>> classes = Main.find();
         Main.printClassNames(classes);
 
-        System.out.println("here : " + classes.getClass());
+        System.out.println("here : " + classes);
     }
 
     public static Collection<Class<?>> find() {
@@ -36,3 +36,4 @@ public class Main {
         }
     }
 }
+
