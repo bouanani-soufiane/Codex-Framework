@@ -10,9 +10,7 @@ import java.util.Collection;
 public class Main {
     public static void main(String[] args) {
         Collection<Class<?>> classes = Main.find();
-        Main.printClassNames(classes);
-
-        System.out.println("here : " + classes);
+        printClassNames(classes);
     }
 
     public static Collection<Class<?>> find() {
@@ -21,7 +19,7 @@ public class Main {
 
         SearchConfig searchConfig = SearchConfig.byCriteria(
                 ClassCriteria.create().allThoseThatMatch((cls) -> {
-                    return cls.getPackage().getName().matches(".*springframework.*");
+                    return cls.getPackage().getName().matches(".*codex.*");
                 })
         );
 
@@ -32,7 +30,7 @@ public class Main {
 
     public static void printClassNames(Collection<Class<?>> classes) {
         for (Class<?> cls : classes) {
-            System.out.println(cls.getName());
+            System.out.println("here : " + cls.getName());
         }
     }
 }
