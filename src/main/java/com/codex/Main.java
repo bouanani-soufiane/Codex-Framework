@@ -9,29 +9,8 @@ import org.burningwave.core.classes.SearchConfig;
 import java.util.Collection;
 public class Main {
     public static void main(String[] args) {
-        Collection<Class<?>> classes = Main.find();
-        printClassNames(classes);
+
     }
 
-    public static Collection<Class<?>> find() {
-        ComponentSupplier componentSupplier = ComponentContainer.getInstance();
-        ClassHunter classHunter = componentSupplier.getClassHunter();
-
-        SearchConfig searchConfig = SearchConfig.byCriteria(
-                ClassCriteria.create().allThoseThatMatch((cls) -> {
-                    return cls.getPackage().getName().matches(".*codex.*");
-                })
-        );
-
-        try (ClassHunter.SearchResult searchResult = classHunter.findBy(searchConfig)) {
-            return searchResult.getClasses();
-        }
-    }
-
-    public static void printClassNames(Collection<Class<?>> classes) {
-        for (Class<?> cls : classes) {
-            System.out.println("here : " + cls.getName());
-        }
-    }
 }
 
