@@ -1,23 +1,20 @@
 package com.codex.framework;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class Injector {
 
-    private static Injector injector;
+    private final Map<Class<?> , Class<?>> diMap = new HashMap<>();
+    private final Map<Class<?> , Class<?>> appScope = new HashMap<>();
 
-    public static void startApplication( Class<?> mainClass) {
-        try {
-            synchronized (Injector.class) {
-                if (injector == null) {
-                    injector = new Injector();
-                    injector.initFramework(mainClass);
-                }
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+
+    Injector( AnnotationScanner annotationScanner , String packageName ){
     }
 
-    private void initFramework ( Class<?> mainClass ) {
 
+
+
+    private void initFramework ( Class<?> mainClass ) {
     }
 }
