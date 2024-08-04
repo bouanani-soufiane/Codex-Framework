@@ -47,15 +47,17 @@ public class Injector {
         for (Class<?> clazz : componentClasses) {
             this.autowiredField(clazz);
         }
-        this.utils.printHashMap(interfaceImplementationsMap);
 
     }
-
 
     private void autowiredField(Class<?> clazz) throws IllegalAccessException {
         Field[] fields = clazz.getDeclaredFields();
         for (Field field : fields) {
-            if (field.isAnnotationPresent(Autowired.class) && !field.isAnnotationPresent(Qualifier.class)) {
+            if(field.isAnnotationPresent(Qualifier.class)){
+                System.out.println("here : " + field.getAnnotation(Qualifier.class).value());
+                this.injectField(clazz , field , field.getAnnotation(Qualifier.class).value());
+
+            } else if (field.isAnnotationPresent(Autowired.class) ) {
                 Class<?> fieldType = field.getType();
                 if (!interfaceImplementationsMap.containsKey(fieldType)) {
                     throw new RuntimeException("Field '" + field.getName() + "' of type '" + fieldType.getName() +
@@ -76,6 +78,8 @@ public class Injector {
             }
         }
     }
+
+
     public Object getBean(Class<?> clazz) {
         return applicationInstanceCache.get(clazz);
     }

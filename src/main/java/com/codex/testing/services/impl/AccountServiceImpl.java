@@ -7,7 +7,7 @@ import com.codex.testing.services.AccountService;
 import com.codex.testing.services.UserService;
 
 @Component
-public class AccountServiceImpl implements AccountService  {
+public class AccountServiceImpl implements AccountService , UserService  {
 
 
     @Override
@@ -15,4 +15,8 @@ public class AccountServiceImpl implements AccountService  {
         return 12345689L;
     }
 
+    @Override
+    public void getUserAccount () {
+
+    }
 }
