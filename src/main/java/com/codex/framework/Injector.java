@@ -1,8 +1,10 @@
 package com.codex.framework;
 
+import com.codex.framework.annotations.Autowired;
 import com.codex.framework.annotations.Component;
-import com.codex.testing.UserAccountClientComponent;
+import com.codex.framework.annotations.Qualifier;
 
+import java.lang.reflect.Field;
 import java.util.*;
 
 public class Injector {
@@ -19,14 +21,14 @@ public class Injector {
     public void initFramework ( Class<?> mainClass ) {
 
         for (Class<?> clazz : componentClasses){
-                Class<?>[] interfaces = clazz.getInterfaces();
+            Class<?>[] interfaces = clazz.getInterfaces();
 
-                if (interfaces.length == 0){
-                    interfaceImplementationsMap.put(clazz, Collections.singletonList(clazz));
-                }else{
-                    for (Class<?> i : interfaces){
-                        registerImplementation(i , clazz);                    }
-                }
+            if (interfaces.length == 0){
+                interfaceImplementationsMap.put(clazz, Collections.singletonList(clazz));
+            }else{
+                for (Class<?> i : interfaces){
+                    registerImplementation(i , clazz);                    }
+            }
             try{
                Object instance = clazz.getDeclaredConstructor().newInstance();
                applicationInstanceCache.put(clazz , instance);
@@ -34,9 +36,38 @@ public class Injector {
             }catch (Exception e){
                 e.printStackTrace();
             }
+
+
+        }
+        for (Class<?> clazz : componentClasses) {
+            this.autowiredField(clazz);
         }
     }
 
+
+    private void autowiredField(Class<?> clazz) {
+        Field[] fields = clazz.getDeclaredFields();
+        for (Field field : fields){
+            if (!field.isAnnotationPresent(Qualifier.class) && field.isAnnotationPresent(Autowired.class) ){
+                if(!interfaceImplementationsMap.containsKey(field.getType())){
+                    throw new RuntimeException("not registred, check in you miss @Componet ");
+                }else if(interfaceImplementationsMap.containsKey(field.getType())){
+                        if (interfaceImplementationsMap.get(field.getType()).size() > 1){
+                            throw new RuntimeException("need to specify exactly which implementation, found more than one implementation for "
+                                    + field.getType()+ "use @Qualifier or @Autowired to specify multiple implementations" );
+                        }else {
+                            System.out.println("ok good now");
+                        }
+                }
+            }
+        }
+    }
+
+
+    private void injectField(Class<?> clazz , Field field){
+        field.setAccessible(true);
+
+    }
 
     private void registerImplementation (Class<?> i , Class<?> impl ){
         if (!interfaceImplementationsMap.containsKey(i)){
