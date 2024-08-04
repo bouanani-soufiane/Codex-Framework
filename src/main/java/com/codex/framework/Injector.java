@@ -76,7 +76,9 @@ public class Injector {
             }
         }
     }
-
+    public Object getBean(Class<?> clazz) {
+        return applicationInstanceCache.get(clazz);
+    }
 
 
 
