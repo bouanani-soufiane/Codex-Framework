@@ -1,6 +1,7 @@
 package com.codex.framework;
 
 import com.codex.framework.annotations.Component;
+import com.codex.testing.UserAccountClientComponent;
 
 import java.util.*;
 
@@ -26,10 +27,16 @@ public class Injector {
                     for (Class<?> i : interfaces){
                         registerImplementation(i , clazz);                    }
                 }
-        }
-        this.printHashMap(interfaceImplementationsMap);
+            try{
+               Object instance = clazz.getDeclaredConstructor().newInstance();
+               applicationInstanceCache.put(clazz , instance);
 
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
     }
+
 
     private void registerImplementation (Class<?> i , Class<?> impl ){
         if (!interfaceImplementationsMap.containsKey(i)){
