@@ -3,13 +3,18 @@ package com.codex.framework;
 import com.codex.framework.annotations.Autowired;
 import com.codex.framework.annotations.Component;
 import com.codex.framework.annotations.Qualifier;
+import com.codex.testing.services.UserService;
 
+import javax.xml.crypto.dsig.spec.C14NMethodParameterSpec;
 import java.lang.reflect.Field;
 import java.util.*;
 
 public class Injector {
 
-    public Injector(){}
+    private Utils utils;
+    public Injector(){
+        this.utils = new Utils();
+    }
 
     AnnotationScanner annotationScanner = new AnnotationScanner(Component.class);
 
@@ -18,7 +23,7 @@ public class Injector {
 
     Collection<Class<?>> componentClasses = annotationScanner.find("com/codex");
 
-    public void initFramework ( Class<?> mainClass ) {
+    public void initFramework ( Class<?> mainClass ) throws IllegalAccessException {
 
         for (Class<?> clazz : componentClasses){
             Class<?>[] interfaces = clazz.getInterfaces();
@@ -42,32 +47,54 @@ public class Injector {
         for (Class<?> clazz : componentClasses) {
             this.autowiredField(clazz);
         }
+        this.utils.printHashMap(interfaceImplementationsMap);
+
     }
 
 
-    private void autowiredField(Class<?> clazz) {
+    private void autowiredField(Class<?> clazz) throws IllegalAccessException {
         Field[] fields = clazz.getDeclaredFields();
-        for (Field field : fields){
-            if (!field.isAnnotationPresent(Qualifier.class) && field.isAnnotationPresent(Autowired.class) ){
-                if(!interfaceImplementationsMap.containsKey(field.getType())){
-                    throw new RuntimeException("not registred, check in you miss @Componet ");
-                }else if(interfaceImplementationsMap.containsKey(field.getType())){
-                        if (interfaceImplementationsMap.get(field.getType()).size() > 1){
-                            throw new RuntimeException("need to specify exactly which implementation, found more than one implementation for "
-                                    + field.getType()+ "use @Qualifier or @Autowired to specify multiple implementations" );
-                        }else {
-                            System.out.println("ok good now");
-                        }
+        for (Field field : fields) {
+            if (field.isAnnotationPresent(Autowired.class) && !field.isAnnotationPresent(Qualifier.class)) {
+                Class<?> fieldType = field.getType();
+                if (!interfaceImplementationsMap.containsKey(fieldType)) {
+                    throw new RuntimeException("Field '" + field.getName() + "' of type '" + fieldType.getName() +
+                            "' is annotated with @Autowired but no implementation is registered. Ensure a component is annotated with @Component.");
+                } else {
+                    List<Class<?>> implementations = interfaceImplementationsMap.get(fieldType);
+                    if (implementations == null || implementations.isEmpty()) {
+                        throw new RuntimeException("No implementations found for interface '" + fieldType.getName() +
+                                "'. Ensure at least one class implements the interface and is annotated with @Component.");
+                    } else if (implementations.size() > 1) {
+                        throw new RuntimeException("Multiple implementations found for interface '" + fieldType.getName() +
+                                "'. Use @Qualifier to specify the desired implementation.");
+                    } else {
+                        this.injectField(clazz, field, implementations.getFirst());
+                        System.out.println("Injected field '" + field.getName() + "' in class '" + clazz.getName() + "'");
+                    }
                 }
             }
         }
     }
 
 
-    private void injectField(Class<?> clazz , Field field){
+
+
+    private void injectField(Class<?> clazz, Field field, Class<?> implementation) throws IllegalAccessException {
         field.setAccessible(true);
 
+        Object instance = applicationInstanceCache.get(clazz);
+        if (instance == null) {
+            throw new RuntimeException("Instance for class '" + clazz.getName() + "' not found in cache.");
+        }
+
+        Object value = applicationInstanceCache.get(implementation);
+        if (value == null) {
+            throw new RuntimeException("Instance for implementation '" + implementation.getName() + "' not found in cache.");
+        }
+        field.set(instance, value);
     }
+
 
     private void registerImplementation (Class<?> i , Class<?> impl ){
         if (!interfaceImplementationsMap.containsKey(i)){
@@ -78,26 +105,6 @@ public class Injector {
     }
 
 
-    Injector( AnnotationScanner annotationScanner , String packageName ){
-    }
 
-    private void printHashMap(Map<?, ?> map) {
-        if (map == null || map.isEmpty()) {
-            System.out.println("The map is empty or null.");
-            return;
-        }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("HashMap Contents:\n");
-        sb.append("-----------------\n");
-
-        for (Map.Entry<?, ?> entry : map.entrySet()) {
-            sb.append("Key: ").append(entry.getKey())
-                    .append(", Value: ").append(entry.getValue())
-                    .append("\n");
-        }
-
-        System.out.println(sb.toString());
-    }
 
 }

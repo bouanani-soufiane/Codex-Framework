@@ -7,9 +7,10 @@ public class Main {
     public static void main(String[] args) throws IllegalAccessException {
         Injector injector = new Injector();
         injector.initFramework(Main.class);
-        UserAccountClientComponent user = new UserAccountClientComponent();
+
+        UserAccountClientComponent user = (UserAccountClientComponent) injector.getBean(UserAccountClientComponent.class);
         user.hello();
-        
+
     }
 
 }
