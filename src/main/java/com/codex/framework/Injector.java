@@ -65,7 +65,7 @@ public class Injector {
             } else if (field.isAnnotationPresent(Autowired.class)) {
                 Class<?> fieldType = field.getType();
 
-                if (applicationInstanceCache.containsKey(fieldType)) {
+                if (!fieldType.isInterface() && applicationInstanceCache.containsKey(fieldType)) {
                     this.injectField(clazz, field, fieldType);
                 } else if (!interfaceImplementationsMap.containsKey(fieldType)) {
                     throw new RuntimeException("Field '" + field.getName() + "' of type '" + fieldType.getName() +
