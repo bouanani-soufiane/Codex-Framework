@@ -3,15 +3,13 @@ package com.codex.framework;
 import com.codex.framework.annotations.Autowired;
 import com.codex.framework.annotations.Component;
 import com.codex.framework.annotations.Qualifier;
-import com.codex.testing.services.UserService;
 
-import javax.xml.crypto.dsig.spec.C14NMethodParameterSpec;
 import java.lang.reflect.Field;
 import java.util.*;
 
 public class Injector {
 
-    private Utils utils;
+    private final Utils utils;
     public Injector(){
         this.utils = new Utils();
     }
@@ -35,8 +33,8 @@ public class Injector {
                     registerImplementation(i , clazz);                    }
             }
             try{
-               Object instance = clazz.getDeclaredConstructor().newInstance();
-               applicationInstanceCache.put(clazz , instance);
+                Object instance = clazz.getDeclaredConstructor().newInstance();
+                applicationInstanceCache.put(clazz , instance);
 
             }catch (Exception e){
                 e.printStackTrace();
@@ -50,16 +48,26 @@ public class Injector {
 
     }
 
+
+    private void autowiredConstructor (Class<?> clazz) {
+
+    }
+
+
+
+
     private void autowiredField(Class<?> clazz) throws IllegalAccessException {
         Field[] fields = clazz.getDeclaredFields();
         for (Field field : fields) {
-            if(field.isAnnotationPresent(Qualifier.class)){
+            if (field.isAnnotationPresent(Qualifier.class)) {
                 System.out.println("here : " + field.getAnnotation(Qualifier.class).value());
-                this.injectField(clazz , field , field.getAnnotation(Qualifier.class).value());
-
-            } else if (field.isAnnotationPresent(Autowired.class) ) {
+                this.injectField(clazz, field, field.getAnnotation(Qualifier.class).value());
+            } else if (field.isAnnotationPresent(Autowired.class)) {
                 Class<?> fieldType = field.getType();
-                if (!interfaceImplementationsMap.containsKey(fieldType)) {
+
+                if (applicationInstanceCache.containsKey(fieldType)) {
+                    this.injectField(clazz, field, fieldType);
+                } else if (!interfaceImplementationsMap.containsKey(fieldType)) {
                     throw new RuntimeException("Field '" + field.getName() + "' of type '" + fieldType.getName() +
                             "' is annotated with @Autowired but no implementation is registered. Ensure a component is annotated with @Component.");
                 } else {
@@ -71,13 +79,14 @@ public class Injector {
                         throw new RuntimeException("Multiple implementations found for interface '" + fieldType.getName() +
                                 "'. Use @Qualifier to specify the desired implementation.");
                     } else {
-                        this.injectField(clazz, field, implementations.getFirst());
-                        System.out.println("Injected field '" + field.getName() + "' in class '" + clazz.getName() + "'");
+                        this.injectField(clazz, field, implementations.get(0));
+                        System.out.println("Injected field '" + field.getName() + "' in class '" + clazz.getName() + "' using interface mapping.");
                     }
                 }
             }
         }
     }
+
 
 
     public Object getBean(Class<?> clazz) {
@@ -91,12 +100,12 @@ public class Injector {
 
         Object instance = applicationInstanceCache.get(clazz);
         if (instance == null) {
-            throw new RuntimeException("Instance for class '" + clazz.getName() + "' not found in cache.");
+            throw new RuntimeException("No instance found for" + clazz.getName() + " in cache.");
         }
 
         Object value = applicationInstanceCache.get(implementation);
         if (value == null) {
-            throw new RuntimeException("Instance for implementation '" + implementation.getName() + "' not found in cache.");
+            throw new RuntimeException("No instance found for " + implementation);
         }
         field.set(instance, value);
     }
