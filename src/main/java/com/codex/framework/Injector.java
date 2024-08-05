@@ -4,6 +4,7 @@ import com.codex.framework.annotations.Autowired;
 import com.codex.framework.annotations.Component;
 import com.codex.framework.annotations.Qualifier;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.*;
 
@@ -44,12 +45,21 @@ public class Injector {
         }
         for (Class<?> clazz : componentClasses) {
             this.autowiredField(clazz);
+            this.autowiredConstructor(clazz);
         }
 
     }
 
 
     private void autowiredConstructor (Class<?> clazz) {
+        Constructor<?>[] constructors = clazz.getDeclaredConstructors();
+        for (Constructor<?> constructor : constructors) {
+            if(constructor.isAnnotationPresent(Autowired.class)){
+                constructor.setAccessible(true);
+                System.out.println("const : " + constructor);
+
+            }
+        }
 
     }
 
@@ -60,7 +70,6 @@ public class Injector {
         Field[] fields = clazz.getDeclaredFields();
         for (Field field : fields) {
             if (field.isAnnotationPresent(Qualifier.class)) {
-                System.out.println("here : " + field.getAnnotation(Qualifier.class).value());
                 this.injectField(clazz, field, field.getAnnotation(Qualifier.class).value());
             } else if (field.isAnnotationPresent(Autowired.class)) {
                 Class<?> fieldType = field.getType();
@@ -80,7 +89,6 @@ public class Injector {
                                 "'. Use @Qualifier to specify the desired implementation.");
                     } else {
                         this.injectField(clazz, field, implementations.get(0));
-                        System.out.println("Injected field '" + field.getName() + "' in class '" + clazz.getName() + "' using interface mapping.");
                     }
                 }
             }

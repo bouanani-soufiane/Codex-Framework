@@ -7,10 +7,13 @@
 
     @Component
     public class Book implements IBook {
+        private final User2 user;
         private String title;
 
         @Autowired
-        private User user;
+        public Book(User2 user){
+            this.user = user;
+        }
 
         public void index(){
             System.out.println("here : " + user.getName());

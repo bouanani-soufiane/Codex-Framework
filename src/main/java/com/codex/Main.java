@@ -5,7 +5,7 @@ import com.codex.testing.interfaces.IBook;
 
 
 public class Main {
-    public static void main(String[] args) throws IllegalAccessException, NoSuchMethodException {
+    public static void main(String[] args) throws Exception {
         Injector injector = new Injector();
         injector.initFramework(Main.class);
 
