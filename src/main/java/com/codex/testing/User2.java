@@ -5,8 +5,8 @@ import com.codex.framework.annotations.Component;
 import com.codex.testing.interfaces.IUser;
 
 @Component
-public class User2 {
-
+public class User2 implements IUser {
+    @Override
     public String getName () {
         return "walo";
     }

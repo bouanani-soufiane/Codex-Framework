@@ -22,34 +22,30 @@ public class Injector {
 
     Collection<Class<?>> componentClasses = annotationScanner.find("com/codex");
 
-    public void initFramework ( Class<?> mainClass ) throws IllegalAccessException {
-
-        for (Class<?> clazz : componentClasses){
+    public void initFramework(Class<?> mainClass) throws IllegalAccessException {
+        for (Class<?> clazz : componentClasses) {
             Class<?>[] interfaces = clazz.getInterfaces();
-
-            if (interfaces.length == 0){
+            if (interfaces.length == 0) {
                 interfaceImplementationsMap.put(clazz, Collections.singletonList(clazz));
-            }else{
-                for (Class<?> i : interfaces){
-                    registerImplementation(i , clazz);                    }
+            } else {
+                for (Class<?> i : interfaces) {
+                    registerImplementation(i, clazz);
+                }
             }
 
-
-            try{
+            try {
                 Constructor<?> autowiredConstructor = null;
                 Constructor<?> noArgConstructor = null;
-
                 Constructor<?>[] constructors = clazz.getDeclaredConstructors();
-
                 for (Constructor<?> constructor : constructors) {
-                    if(constructor.isAnnotationPresent(Autowired.class)){
+                    if (constructor.isAnnotationPresent(Autowired.class)) {
                         autowiredConstructor = constructor;
                         break;
-
-                    }else if (constructor.getParameterCount() == 0) {
+                    } else if (constructor.getParameterCount() == 0) {
                         noArgConstructor = constructor;
                     }
                 }
+
                 if (autowiredConstructor != null) {
                     Object instance = autowiredConstructor.newInstance(resolveConstructorParameters(autowiredConstructor));
                     applicationInstanceCache.put(clazz, instance);
@@ -60,18 +56,15 @@ public class Injector {
                     throw new RuntimeException("No suitable constructor found for class " + clazz.getName());
                 }
 
-            }catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
-
-
         }
+
         for (Class<?> clazz : componentClasses) {
             this.autowiredField(clazz);
         }
-
     }
-
 
     private Object[] resolveConstructorParameters(Constructor<?> constructor) throws IllegalAccessException {
         Class<?>[] parameterTypes = constructor.getParameterTypes();
@@ -79,33 +72,55 @@ public class Injector {
 
         for (int i = 0; i < parameterTypes.length; i++) {
             Class<?> paramType = parameterTypes[i];
-            if(!paramType.isInterface()){
-                Object dependency = applicationInstanceCache.get(paramType);
-                if (dependency == null) {
-                    throw new RuntimeException("No instance found for class parameter type " + paramType.getName());
-                }
-                dependencies[i] = dependency;
-            } else {
-                List<Class<?>> implementations = interfaceImplementationsMap.get(paramType);
-                if (implementations == null || implementations.isEmpty()) {
-                    throw new RuntimeException("there is no implementation found for " + paramType.getName());
-                } else if (implementations.size() > 1) {
-                    throw new RuntimeException("Multiple implementations found for interface '" + paramType.getName() +
-                            "'. Use @Qualifier to specify the desired implementation.");
-                } else {
-                    Class<?> implementation = implementations.get(0);
-                    Object dependency = applicationInstanceCache.get(implementation);
-                    if (dependency == null) {
-                        throw new RuntimeException("No instance found for implementation " + implementation.getName());
-                    }
-                    dependencies[i] = dependency;
-                }
-            }
+            dependencies[i] = getOrCreateInstance(paramType);
         }
         return dependencies;
     }
 
+    private Object getOrCreateInstance(Class<?> clazz) throws IllegalAccessException {
+        if (applicationInstanceCache.containsKey(clazz)) {
+            return applicationInstanceCache.get(clazz);
+        }
 
+        if (clazz.isInterface()) {
+            List<Class<?>> implementations = interfaceImplementationsMap.get(clazz);
+            if (implementations == null || implementations.isEmpty()) {
+                throw new RuntimeException("No implementation found for interface " + clazz.getName());
+            } else if (implementations.size() > 1) {
+                throw new RuntimeException("Multiple implementations found for interface '" + clazz.getName() +
+                        "'. Use @Qualifier to specify the desired implementation.");
+            }
+            clazz = implementations.get(0);
+        }
+
+        Constructor<?>[] constructors = clazz.getDeclaredConstructors();
+        Constructor<?> autowiredConstructor = null;
+        Constructor<?> noArgConstructor = null;
+        for (Constructor<?> constructor : constructors) {
+            if (constructor.isAnnotationPresent(Autowired.class)) {
+                autowiredConstructor = constructor;
+                break;
+            } else if (constructor.getParameterCount() == 0) {
+                noArgConstructor = constructor;
+            }
+        }
+
+        Object instance;
+        try {
+            if (autowiredConstructor != null) {
+                instance = autowiredConstructor.newInstance(resolveConstructorParameters(autowiredConstructor));
+            } else if (noArgConstructor != null) {
+                instance = noArgConstructor.newInstance();
+            } else {
+                throw new RuntimeException("No suitable constructor found for class " + clazz.getName());
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create instance of " + clazz.getName(), e);
+        }
+
+        applicationInstanceCache.put(clazz, instance);
+        return instance;
+    }
 
     private void autowiredField(Class<?> clazz) throws IllegalAccessException {
         Field[] fields = clazz.getDeclaredFields();
@@ -136,39 +151,30 @@ public class Injector {
         }
     }
 
-
-
     public Object getBean(Class<?> clazz) {
         return applicationInstanceCache.get(clazz);
     }
-
-
 
     private void injectField(Class<?> clazz, Field field, Class<?> implementation) throws IllegalAccessException {
         field.setAccessible(true);
 
         Object instance = applicationInstanceCache.get(clazz);
         if (instance == null) {
-            throw new RuntimeException("No instance found for" + clazz.getName() + " in cache.");
+            throw new RuntimeException("No instance found for " + clazz.getName() + " in cache.");
         }
 
         Object value = applicationInstanceCache.get(implementation);
         if (value == null) {
-            throw new RuntimeException("No instance found for " + implementation);
+            value = getOrCreateInstance(implementation);
         }
         field.set(instance, value);
     }
 
-
-    private void registerImplementation (Class<?> i , Class<?> impl ){
-        if (!interfaceImplementationsMap.containsKey(i)){
+    private void registerImplementation(Class<?> i, Class<?> impl) {
+        if (!interfaceImplementationsMap.containsKey(i)) {
             interfaceImplementationsMap.put(i, new ArrayList<>( Collections.singletonList(impl)));
-        }else{
+        } else {
             interfaceImplementationsMap.get(i).add(impl);
         }
     }
-
-
-
-
 }

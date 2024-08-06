@@ -1,6 +1,7 @@
     package com.codex.testing;
     import com.codex.framework.annotations.Autowired;
     import com.codex.framework.annotations.Component;
+    import com.codex.framework.annotations.Qualifier;
     import com.codex.testing.interfaces.IBook;
     import com.codex.testing.interfaces.IUser;
 
@@ -10,6 +11,7 @@
         private String title;
 
         @Autowired
+        @Qualifier(User.class)
         public Book( IUser user){
             this.user = user;
         }
