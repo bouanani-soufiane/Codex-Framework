@@ -33,9 +33,32 @@ public class Injector {
                 for (Class<?> i : interfaces){
                     registerImplementation(i , clazz);                    }
             }
+
+
             try{
-                Object instance = clazz.getDeclaredConstructor().newInstance();
-                applicationInstanceCache.put(clazz , instance);
+                Constructor<?> autowiredConstructor = null;
+                Constructor<?> noArgConstructor = null;
+
+                Constructor<?>[] constructors = clazz.getDeclaredConstructors();
+
+                for (Constructor<?> constructor : constructors) {
+                    if(constructor.isAnnotationPresent(Autowired.class)){
+                        autowiredConstructor = constructor;
+                        break;
+
+                    }else if (constructor.getParameterCount() == 0) {
+                        noArgConstructor = constructor;
+                    }
+                }
+                if (autowiredConstructor != null) {
+                    Object instance = autowiredConstructor.newInstance(resolveConstructorParameters(autowiredConstructor));
+                    applicationInstanceCache.put(clazz, instance);
+                } else if (noArgConstructor != null) {
+                    Object instance = noArgConstructor.newInstance();
+                    applicationInstanceCache.put(clazz, instance);
+                } else {
+                    throw new RuntimeException("No suitable constructor found for class " + clazz.getName());
+                }
 
             }catch (Exception e){
                 e.printStackTrace();
@@ -45,24 +68,42 @@ public class Injector {
         }
         for (Class<?> clazz : componentClasses) {
             this.autowiredField(clazz);
-            this.autowiredConstructor(clazz);
         }
 
     }
 
 
-    private void autowiredConstructor (Class<?> clazz) {
-        Constructor<?>[] constructors = clazz.getDeclaredConstructors();
-        for (Constructor<?> constructor : constructors) {
-            if(constructor.isAnnotationPresent(Autowired.class)){
-                constructor.setAccessible(true);
-                System.out.println("const : " + constructor);
+    private Object[] resolveConstructorParameters(Constructor<?> constructor) throws IllegalAccessException {
+        Class<?>[] parameterTypes = constructor.getParameterTypes();
+        Object[] dependencies = new Object[parameterTypes.length];
 
+        for (int i = 0; i < parameterTypes.length; i++) {
+            Class<?> paramType = parameterTypes[i];
+            if(!paramType.isInterface()){
+                Object dependency = applicationInstanceCache.get(paramType);
+                if (dependency == null) {
+                    throw new RuntimeException("No instance found for class parameter type " + paramType.getName());
+                }
+                dependencies[i] = dependency;
+            } else {
+                List<Class<?>> implementations = interfaceImplementationsMap.get(paramType);
+                if (implementations == null || implementations.isEmpty()) {
+                    throw new RuntimeException("there is no implementation found for " + paramType.getName());
+                } else if (implementations.size() > 1) {
+                    throw new RuntimeException("Multiple implementations found for interface '" + paramType.getName() +
+                            "'. Use @Qualifier to specify the desired implementation.");
+                } else {
+                    Class<?> implementation = implementations.get(0);
+                    Object dependency = applicationInstanceCache.get(implementation);
+                    if (dependency == null) {
+                        throw new RuntimeException("No instance found for implementation " + implementation.getName());
+                    }
+                    dependencies[i] = dependency;
+                }
             }
         }
-
+        return dependencies;
     }
-
 
 
 
