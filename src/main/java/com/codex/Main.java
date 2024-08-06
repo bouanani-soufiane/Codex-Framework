@@ -8,7 +8,6 @@ public class Main {
     public static void main(String[] args) throws Exception {
         Injector injector = new Injector();
         injector.initFramework(Main.class);
-
         IBook book = (IBook) injector.getBean(Book.class);
         book.index();
     }

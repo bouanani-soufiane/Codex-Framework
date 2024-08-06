@@ -1,180 +1,172 @@
 package com.codex.framework;
-
 import com.codex.framework.annotations.Autowired;
 import com.codex.framework.annotations.Component;
 import com.codex.framework.annotations.Qualifier;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Parameter;
 import java.util.*;
 
 public class Injector {
 
-    private final Utils utils;
-    public Injector(){
+    AnnotationScanner scanner;
+    Utils utils;
+    Collection<Class<?>> components;
+
+    private final Map<Class<?>, List<Class<?>>> bindingMap = new HashMap<>();
+    private final Map<Class<?>, Object> instances = new HashMap<>();
+
+    public Injector() {
         this.utils = new Utils();
+        this.scanner = new AnnotationScanner(Component.class);
+        this.components = scanner.find("com/codex");
     }
 
-    AnnotationScanner annotationScanner = new AnnotationScanner(Component.class);
+    public void initFramework(Class<?> mainClass) throws IllegalAccessException, NoSuchMethodException {
+        this.bindInterfaceToClassImpls(components);
+        this.initializeBeans(components);
+    }
 
-    private final Map<Class<?> , List<Class<?>>> interfaceImplementationsMap = new HashMap<>();
-    private final Map<Class<?> , Object> applicationInstanceCache = new HashMap<>();
+    /**
+     * Initializes and caches instances of the provided component classes,
+     * using the appropriate constructors for dependency injection.
+     *
+     * @param components a collection of component classes to initialize
+     */
 
-    Collection<Class<?>> componentClasses = annotationScanner.find("com/codex");
+    private void initializeBeans(Collection<Class<?>> components) throws NoSuchMethodException {
+        for (Class<?> component : components) {
+            Constructor<?>[] constructors = component.getDeclaredConstructors();
+            for (Constructor<?> constructor : constructors) {
+                if (constructor.isAnnotationPresent(Autowired.class)) {
+                    withAutowiredConstructor(constructor);
+                } else {
+                    withDefaultConstructor(constructor);
+                }
+            }
+        }
+    }
 
-    public void initFramework(Class<?> mainClass) throws IllegalAccessException {
-        for (Class<?> clazz : componentClasses) {
-            Class<?>[] interfaces = clazz.getInterfaces();
+    /**
+     * Creates an instance of a class using a constructor annotated with `@Autowired`.
+     *
+     * @param constructor the constructor annotated with `@Autowired`
+     */
+
+    private void withAutowiredConstructor(Constructor<?> constructor) throws NoSuchMethodException {
+        Parameter[] parameters = constructor.getParameters();
+        Qualifier[] qualifiers = constructor.getAnnotationsByType(Qualifier.class);
+
+        Object[] args = new Object[parameters.length];
+        for (int i = 0; i < parameters.length; i++) {
+            Class<?> paramType = parameters[i].getType();
+            if (!paramType.isInterface()) {
+                args[i] = getOrCreate(paramType);
+            } else {
+                if (!bindingMap.containsKey(paramType) || bindingMap.get(paramType).isEmpty()) {
+                    throw new RuntimeException("No implementation found for " + paramType);
+                }
+                if (bindingMap.get(paramType).size() > 1) {
+                    Class<?> implClass = checkQualifier(paramType, qualifiers);
+                    args[i] = getOrCreate(implClass);
+                } else {
+                    args[i] = getOrCreate(bindingMap.get(paramType).getFirst());
+                }
+            }
+        }
+        try {
+            Object instance = constructor.newInstance(args);
+            instances.put(constructor.getDeclaringClass(), instance);
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException("Error creating instance", e);
+        }
+    }
+
+    /**
+     * Creates an instance of a class using default constructor
+     *
+     * @param constructor the default constructor
+     */
+
+    private void withDefaultConstructor(Constructor<?> constructor) {
+        try {
+            Object instance = constructor.newInstance();
+            instances.put(constructor.getDeclaringClass(), instance);
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException("Error creating instance", e);
+        }
+    }
+
+    /**
+     * Checks if there is an implementation of the specified interface that matches any of the given qualifiers.
+     *
+     * @param type the interface type to check for implementations
+     * @param qualifiers the array of qualifiers to match against the implementations
+     * @return the class type of the matching implementation, if found
+     */
+
+    private Class<?> checkQualifier(Class<?> type, Qualifier[] qualifiers) {
+        for (Qualifier qualifier : qualifiers) {
+            List<Class<?>> implementations = bindingMap.get(type);
+            if (implementations != null && implementations.contains(qualifier.value())) {
+                return qualifier.value();
+            }
+        }
+        throw new RuntimeException("No implementation found for " + type + " with the specified qualifiers.");
+    }
+
+    /**
+     * Retrieves an existing instance from the cache or creates a new one if not present.
+     *
+     * @param clazz the class type of the instance
+     * @return the instance of the specified class
+     */
+
+    private Object getOrCreate(Class<?> clazz) {
+        if (!instances.containsKey(clazz)) {
+            try {
+                Object instance = clazz.getDeclaredConstructor().newInstance();
+                instances.put(clazz, instance);
+            } catch (InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException e) {
+                throw new RuntimeException("Error creating instance for " + clazz, e);
+            }
+        }
+        return instances.get(clazz);
+    }
+
+    /**
+     * Binds each interface to the list of all classes implementing it.
+     *
+     * @param components a collection of component classes
+     */
+
+    private void bindInterfaceToClassImpls(Collection<Class<?>> components) {
+        for (Class<?> component : components) {
+            Class<?>[] interfaces = component.getInterfaces();
             if (interfaces.length == 0) {
-                interfaceImplementationsMap.put(clazz, Collections.singletonList(clazz));
+                bindingMap.put(component, Collections.singletonList(component));
             } else {
                 for (Class<?> i : interfaces) {
-                    registerImplementation(i, clazz);
-                }
-            }
-
-            try {
-                Constructor<?> autowiredConstructor = null;
-                Constructor<?> noArgConstructor = null;
-                Constructor<?>[] constructors = clazz.getDeclaredConstructors();
-                for (Constructor<?> constructor : constructors) {
-                    if (constructor.isAnnotationPresent(Autowired.class)) {
-                        autowiredConstructor = constructor;
-                        break;
-                    } else if (constructor.getParameterCount() == 0) {
-                        noArgConstructor = constructor;
-                    }
-                }
-
-                if (autowiredConstructor != null) {
-                    Object instance = autowiredConstructor.newInstance(resolveConstructorParameters(autowiredConstructor));
-                    applicationInstanceCache.put(clazz, instance);
-                } else if (noArgConstructor != null) {
-                    Object instance = noArgConstructor.newInstance();
-                    applicationInstanceCache.put(clazz, instance);
-                } else {
-                    throw new RuntimeException("No suitable constructor found for class " + clazz.getName());
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        for (Class<?> clazz : componentClasses) {
-            this.autowiredField(clazz);
-        }
-    }
-
-    private Object[] resolveConstructorParameters(Constructor<?> constructor) throws IllegalAccessException {
-        Class<?>[] parameterTypes = constructor.getParameterTypes();
-        Object[] dependencies = new Object[parameterTypes.length];
-
-        for (int i = 0; i < parameterTypes.length; i++) {
-            Class<?> paramType = parameterTypes[i];
-            dependencies[i] = getOrCreateInstance(paramType);
-        }
-        return dependencies;
-    }
-
-    private Object getOrCreateInstance(Class<?> clazz) throws IllegalAccessException {
-        if (applicationInstanceCache.containsKey(clazz)) {
-            return applicationInstanceCache.get(clazz);
-        }
-
-        if (clazz.isInterface()) {
-            List<Class<?>> implementations = interfaceImplementationsMap.get(clazz);
-            if (implementations == null || implementations.isEmpty()) {
-                throw new RuntimeException("No implementation found for interface " + clazz.getName());
-            } else if (implementations.size() > 1) {
-                throw new RuntimeException("Multiple implementations found for interface '" + clazz.getName() +
-                        "'. Use @Qualifier to specify the desired implementation.");
-            }
-            clazz = implementations.get(0);
-        }
-
-        Constructor<?>[] constructors = clazz.getDeclaredConstructors();
-        Constructor<?> autowiredConstructor = null;
-        Constructor<?> noArgConstructor = null;
-        for (Constructor<?> constructor : constructors) {
-            if (constructor.isAnnotationPresent(Autowired.class)) {
-                autowiredConstructor = constructor;
-                break;
-            } else if (constructor.getParameterCount() == 0) {
-                noArgConstructor = constructor;
-            }
-        }
-
-        Object instance;
-        try {
-            if (autowiredConstructor != null) {
-                instance = autowiredConstructor.newInstance(resolveConstructorParameters(autowiredConstructor));
-            } else if (noArgConstructor != null) {
-                instance = noArgConstructor.newInstance();
-            } else {
-                throw new RuntimeException("No suitable constructor found for class " + clazz.getName());
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to create instance of " + clazz.getName(), e);
-        }
-
-        applicationInstanceCache.put(clazz, instance);
-        return instance;
-    }
-
-    private void autowiredField(Class<?> clazz) throws IllegalAccessException {
-        Field[] fields = clazz.getDeclaredFields();
-        for (Field field : fields) {
-            if (field.isAnnotationPresent(Qualifier.class)) {
-                this.injectField(clazz, field, field.getAnnotation(Qualifier.class).value());
-            } else if (field.isAnnotationPresent(Autowired.class)) {
-                Class<?> fieldType = field.getType();
-
-                if (!fieldType.isInterface() && applicationInstanceCache.containsKey(fieldType)) {
-                    this.injectField(clazz, field, fieldType);
-                } else if (!interfaceImplementationsMap.containsKey(fieldType)) {
-                    throw new RuntimeException("Field '" + field.getName() + "' of type '" + fieldType.getName() +
-                            "' is annotated with @Autowired but no implementation is registered. Ensure a component is annotated with @Component.");
-                } else {
-                    List<Class<?>> implementations = interfaceImplementationsMap.get(fieldType);
-                    if (implementations == null || implementations.isEmpty()) {
-                        throw new RuntimeException("No implementations found for interface '" + fieldType.getName() +
-                                "'. Ensure at least one class implements the interface and is annotated with @Component.");
-                    } else if (implementations.size() > 1) {
-                        throw new RuntimeException("Multiple implementations found for interface '" + fieldType.getName() +
-                                "'. Use @Qualifier to specify the desired implementation.");
+                    if (!bindingMap.containsKey(i)) {
+                        bindingMap.put(i, new ArrayList<>(Collections.singletonList(component)));
                     } else {
-                        this.injectField(clazz, field, implementations.get(0));
+                        bindingMap.get(i).add(component);
                     }
                 }
             }
         }
     }
+
+    /**
+     * Provides access to the instances managed by the framework.
+     * Acts as the context holder for all created objects.
+     *
+     * @param clazz the class type of the instance to retrieve
+     * @return the instance of the requested class, or null if not found
+     */
 
     public Object getBean(Class<?> clazz) {
-        return applicationInstanceCache.get(clazz);
-    }
-
-    private void injectField(Class<?> clazz, Field field, Class<?> implementation) throws IllegalAccessException {
-        field.setAccessible(true);
-
-        Object instance = applicationInstanceCache.get(clazz);
-        if (instance == null) {
-            throw new RuntimeException("No instance found for " + clazz.getName() + " in cache.");
-        }
-
-        Object value = applicationInstanceCache.get(implementation);
-        if (value == null) {
-            value = getOrCreateInstance(implementation);
-        }
-        field.set(instance, value);
-    }
-
-    private void registerImplementation(Class<?> i, Class<?> impl) {
-        if (!interfaceImplementationsMap.containsKey(i)) {
-            interfaceImplementationsMap.put(i, new ArrayList<>( Collections.singletonList(impl)));
-        } else {
-            interfaceImplementationsMap.get(i).add(impl);
-        }
+        return instances.get(clazz);
     }
 }
