@@ -1,4 +1,4 @@
-package com.codex.framework;
+package com.codex.framework.utils;
 
 import java.util.Map;
 

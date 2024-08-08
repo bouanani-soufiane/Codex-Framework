@@ -7,14 +7,10 @@
 
     @Component
     public class Book implements IBook {
-        private final IUser user;
-        private String title;
 
         @Autowired
-        public Book( IUser user){
-            this.user = user;
-        }
-
+        @Qualifier(User2.class)
+        private IUser user;
 
         @Override
         public void index () {

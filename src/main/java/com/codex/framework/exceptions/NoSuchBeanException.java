@@ -1,4 +1,4 @@
-package com.codex.framework;
+package com.codex.framework.exceptions;
 
 public class NoSuchBeanException extends RuntimeException {
     public NoSuchBeanException() {

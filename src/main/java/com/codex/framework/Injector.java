@@ -2,8 +2,10 @@ package com.codex.framework;
 import com.codex.framework.annotations.Autowired;
 import com.codex.framework.annotations.Component;
 import com.codex.framework.annotations.Qualifier;
+import com.codex.framework.utils.Utils;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Parameter;
 import java.util.*;
@@ -25,19 +27,25 @@ public class Injector {
 
     public void initFramework(Class<?> mainClass) throws IllegalAccessException, NoSuchMethodException {
         this.bindInterfaceToClassImpls(components);
-        this.initializeBeans(components);
+        this.inject(components);
+    }
+
+    private void inject(Collection<Class<?>> components) throws NoSuchMethodException {
+        for (Class<?> component : components) {
+            initializeBean(component);
+        }
     }
 
     /**
-     * Initializes and caches instances of the provided component classes,
-     * using the appropriate constructors for dependency injection.
+
      *
-     * @param components a collection of component classes to initialize
+     * @param component the component class to initialize
      */
 
-    private void initializeBeans(Collection<Class<?>> components) throws NoSuchMethodException {
-        for (Class<?> component : components) {
+    private void initializeBean(Class<?> component) throws NoSuchMethodException {
+
             Constructor<?>[] constructors = component.getDeclaredConstructors();
+            Field[] fields = component.getDeclaredFields();
             for (Constructor<?> constructor : constructors) {
                 if (constructor.isAnnotationPresent(Autowired.class)) {
                     withAutowiredConstructor(constructor);
@@ -45,8 +53,68 @@ public class Injector {
                     withDefaultConstructor(constructor);
                 }
             }
+            for (Field field : fields) {
+               fieldAutowiring(field);
+            }
+
+    }
+
+    /**
+     * Handles the injection of dependencies into a field. If the field is annotated with `@Autowired`,
+     *
+     * @param field the field into which the dependency should be injected
+     */
+
+    private void fieldAutowiring(Field field) throws NoSuchMethodException {
+        Class<?> fieldType = field.getType();
+
+        if (field.isAnnotationPresent(Autowired.class)) {
+            if (!fieldType.isInterface()) {
+                if (!instances.containsKey(fieldType)) {
+                    initializeBean(fieldType);
+                }
+                injectField(field, instances.get(fieldType));
+            } else {
+                List<Class<?>> implementations = bindingMap.get(fieldType);
+
+                if (implementations == null || implementations.isEmpty()) {
+                    throw new RuntimeException("The interface you provided has no implementation");
+                } else if (implementations.size() > 1) {
+                    Qualifier qualifier = field.getAnnotation(Qualifier.class);
+                    if (qualifier == null) {
+                        throw new RuntimeException("The interface you provided has multiple implementations; please use @Qualifier to specify!");
+                    } else {
+                        Class<?> qualifiedClass = qualifier.value();
+                        if (!implementations.contains(qualifiedClass)) {
+                            throw new RuntimeException("The Qualifier you provided is not a valid implementation for " + fieldType.getName());
+                        } else {
+                            injectField(field, getOrCreate(qualifiedClass));
+                        }
+                    }
+                } else {
+                    injectField(field, getOrCreate(implementations.getFirst()));
+                }
+            }
         }
     }
+
+    /**
+     * Injects a specific instance into a field of a component class.
+     *
+     * @param field the field into which the instance should be injected
+     * @param instance the instance to inject into the field
+     */
+
+    private void injectField(Field field, Object instance) {
+        try {
+            field.setAccessible(true);
+            Object componentInstance = instances.get(field.getDeclaringClass());
+            field.set(componentInstance, instance);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException("Error injecting field " + field.getName() + " in " + field.getDeclaringClass().getName(), e);
+        }
+    }
+
 
     /**
      * Creates an instance of a class using a constructor annotated with `@Autowired`.
