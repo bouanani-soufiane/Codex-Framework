@@ -1,14 +1,12 @@
 package com.codex.framework.annotations;
 
-import com.codex.testing.User2;
+import com.codex.testing.Pay;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
+@Repeatable(Qualifiers.class)
 @Target({ ElementType.FIELD, ElementType.PARAMETER ,ElementType.CONSTRUCTOR})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Qualifier {
-    Class<User2> value();
+    Class<?> value();
 }

@@ -7,10 +7,15 @@
 
     @Component
     public class Book implements IBook {
-
-        @Autowired
-        @Qualifier(User2.class)
         private IUser user;
+        private Pay pay;
+        @Autowired
+
+        @Qualifier(User.class)
+        public Book(IUser user ,Pay pay   ){
+            this.pay = pay;
+            this.user = user;
+        }
 
         @Override
         public void index () {
