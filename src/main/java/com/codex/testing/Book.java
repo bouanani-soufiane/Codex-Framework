@@ -1,7 +1,7 @@
     package com.codex.testing;
-    import com.codex.framework.annotations.Autowired;
-    import com.codex.framework.annotations.Component;
-    import com.codex.framework.annotations.Qualifier;
+    import com.codex.framework.DI.annotations.Autowired;
+    import com.codex.framework.DI.annotations.Component;
+    import com.codex.framework.DI.annotations.Qualifier;
     import com.codex.testing.interfaces.IBook;
     import com.codex.testing.interfaces.IUser;
 
@@ -9,6 +9,7 @@
     public class Book implements IBook {
         private IUser user;
         private Pay pay;
+        public String title = "kitab 3ajib";
         @Autowired
 
         @Qualifier(User.class)

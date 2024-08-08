@@ -1,6 +1,6 @@
-package com.codex.framework.processors;
+package com.codex.framework.DI.processors;
 
-import com.codex.framework.annotations.Autowired;
+import com.codex.framework.DI.annotations.Autowired;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
@@ -16,7 +16,7 @@ import javax.tools.Diagnostic;
 import java.util.List;
 import java.util.Set;
 
-@SupportedAnnotationTypes("com.codex.framework.annotations.Autowired")
+@SupportedAnnotationTypes("com.codex.framework.DI.annotations.Autowired")
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class AutowiredProcessor extends AbstractProcessor {
 

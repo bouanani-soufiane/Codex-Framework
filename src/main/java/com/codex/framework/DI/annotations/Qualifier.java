@@ -1,6 +1,4 @@
-package com.codex.framework.annotations;
-
-import com.codex.testing.Pay;
+package com.codex.framework.DI.annotations;
 
 import java.lang.annotation.*;
 
