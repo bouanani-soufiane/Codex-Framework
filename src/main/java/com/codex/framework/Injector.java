@@ -26,16 +26,22 @@ public class Injector {
         this.components = scanner.find("com/codex");
     }
 
+    /**  Initializes the framework by binding interfaces to their implementations and injecting dependencies into components.  */
+
     public void initFramework(Class<?> mainClass) throws IllegalAccessException, NoSuchMethodException {
         this.bindInterfaceToClassImpls(components);
         this.inject(components);
     }
+
+    /**  Iterates through components to initialize and inject dependencies into each one. */
 
     private void inject(Collection<Class<?>> components) throws NoSuchMethodException {
         for (Class<?> component : components) {
             initializeBean(component);
         }
     }
+
+    /**  Initializes a component by creating its instance and injecting dependencies into its fields. */
 
     private void initializeBean(Class<?> component) throws NoSuchMethodException {
         Constructor<?>[] constructors = component.getDeclaredConstructors();
@@ -47,7 +53,6 @@ public class Injector {
             }
             createInstance(constructor);
         }
-
         for (Field field : fields) {
             if (field.isAnnotationPresent(Autowired.class)) {
                 Object dependency = resolveDependency(field.getType(), field.getAnnotation(Qualifier.class));
@@ -56,29 +61,33 @@ public class Injector {
         }
     }
 
+    /** Creates an instance of a component using its constructor, resolving any dependencies required by the constructor.  */
+
     private void createInstance(Constructor<?> constructor) throws NoSuchMethodException {
-        Object[] args = null;
+        Object[] dependencies = null;
 
         if (constructor.isAnnotationPresent(Autowired.class)) {
             Parameter[] parameters = constructor.getParameters();
             Qualifier[] qualifiers = constructor.getAnnotationsByType(Qualifier.class);
 
-            args = new Object[parameters.length];
+            dependencies = new Object[parameters.length];
             for (int i = 0; i < parameters.length; i++) {
                 Class<?> paramType = parameters[i].getType();
                 Qualifier qualifier = i < qualifiers.length ? qualifiers[i] : null;
 
-                args[i] = resolveDependency(paramType, qualifier);
+                dependencies[i] = resolveDependency(paramType, qualifier);
             }
         }
 
         try {
-            Object instance = constructor.newInstance(args);
+            Object instance = constructor.newInstance(dependencies);
             instances.put(constructor.getDeclaringClass(), instance);
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException("Error creating instance", e);
         }
     }
+
+    /**  Resolves a dependency based on the type and optional qualifier, returning the appropriate implementation. */
 
     private Object resolveDependency(Class<?> type, Qualifier qualifier) {
         if (!type.isInterface()) {
@@ -106,6 +115,7 @@ public class Injector {
         }
     }
 
+    /**  Injects a dependency into a field of a component. */
 
     private void injectField(Field field, Object instance) {
         try {
@@ -116,6 +126,8 @@ public class Injector {
             throw new RuntimeException("Error injecting field " + field.getName() + " in " + field.getDeclaringClass().getName(), e);
         }
     }
+
+    /**  Returns an existing instance of a class or creates a new one if not already present in the cache. */
 
     private Object getOrCreate(Class<?> clazz) {
         if (!instances.containsKey(clazz)) {
@@ -128,6 +140,8 @@ public class Injector {
         }
         return instances.get(clazz);
     }
+
+    /**  Binds interfaces to their implementing classes based on the components found by the scanner. */
 
     private void bindInterfaceToClassImpls(Collection<Class<?>> components) {
         for (Class<?> component : components) {
@@ -145,6 +159,8 @@ public class Injector {
             }
         }
     }
+
+    /**  Returns the cached instance of a class. */
 
     public Object getBean(Class<?> clazz) {
         return instances.get(clazz);
