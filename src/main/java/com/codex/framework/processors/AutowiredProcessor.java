@@ -1,4 +1,5 @@
 package com.codex.framework.processors;
+
 import com.codex.framework.annotations.Autowired;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -21,7 +22,6 @@ public class AutowiredProcessor extends AbstractProcessor {
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        // Debug message to verify process method is invoked
         processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "AutowiredProcessor: process method invoked");
 
         for (Element element : roundEnv.getElementsAnnotatedWith(Autowired.class)) {
@@ -34,18 +34,15 @@ public class AutowiredProcessor extends AbstractProcessor {
                         .count();
 
                 if (autowiredCount > 1) {
-                    for (Element constructor : constructors) {
-                        if (constructor.getAnnotation(Autowired.class) != null) {
-                            processingEnv.getMessager().printMessage(
-                                    Diagnostic.Kind.ERROR,
-                                    "Only one constructor can be annotated with @Autowired in class: " + enclosingClass.getQualifiedName(),
-                                    constructor
-                            );
-                        }
-                    }
+                    processingEnv.getMessager().printMessage(
+                            Diagnostic.Kind.ERROR,
+                            "Only one constructor can be annotated with @Autowired in class: " + enclosingClass.getQualifiedName(),
+                            element
+                    );
+                    return true; // Exit early if the error is found
                 }
             }
         }
-        return true; // No further processing of this annotation type is necessary
+        return false;  // Return false to allow further processing by other annotation processors
     }
 }
