@@ -1,16 +1,17 @@
 package com.codex.framework.ORM;
 
 import com.codex.framework.ORM.utils.Print;
+import com.codex.framework.ORM.utils.env;
 
 import java.sql.*;
 
 public class DatabaseConnection {
     private static DatabaseConnection instance ;
     private Connection connection ;
-    private static final String URL = "jdbc:postgresql://localhost:5432/red_indians_night";
-    private static final String USERNAME = "postgres";
-    private static final String PASSWORD = "admin";
-    private static final String DRIVER = "org.postgresql.Driver";
+    private static final String URL = env.get("DB_URL");
+    private static final String USERNAME = env.get("DB_USERNAME");
+    private static final String PASSWORD = env.get("DB_PASSWORD");
+    private static final String DRIVER = env.get("DB_DRIVER");
 
     private DatabaseConnection() throws SQLException{
         try {
