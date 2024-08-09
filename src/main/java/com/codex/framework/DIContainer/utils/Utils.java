@@ -3,7 +3,7 @@ package com.codex.framework.DIContainer.utils;
 import java.util.Map;
 
 public class Utils {
-    public void printHashMap( Map<?, ?> map) {
+    public static void printHashMap( Map<?, ?> map) {
         if (map == null || map.isEmpty()) {
             System.out.println("The map is empty or null.");
             return;

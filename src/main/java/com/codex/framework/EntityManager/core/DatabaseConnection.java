@@ -1,4 +1,4 @@
-package com.codex.framework.EntityManager;
+package com.codex.framework.EntityManager.core;
 
 import com.codex.framework.EntityManager.utils.Print;
 import com.codex.framework.EntityManager.utils.env;

@@ -1,5 +1,6 @@
 package com.codex.framework.DIContainer;
 
+import com.codex.framework.AnnotationScanner;
 import com.codex.framework.DIContainer.annotations.Autowired;
 import com.codex.framework.DIContainer.annotations.Component;
 import com.codex.framework.DIContainer.annotations.Qualifier;

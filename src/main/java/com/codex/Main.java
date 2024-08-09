@@ -1,8 +1,9 @@
 package com.codex;
 import com.codex.framework.DIContainer.Injector;
-import com.codex.framework.EntityManager.DatabaseConnection;
-import com.codex.testing.Book;
-import com.codex.testing.interfaces.IBook;
+import com.codex.framework.EntityManager.core.DatabaseConnection;
+import com.codex.framework.EntityManager.core.ProcessManager;
+import com.codex.testing.Components.Book;
+import com.codex.testing.Components.interfaces.IBook;
 
 
 public class Main {
@@ -13,6 +14,9 @@ public class Main {
         IBook book = (IBook) injector.getBean(Book.class);
         book.index();
         DatabaseConnection.getInstance().getConnection();
+
+        ProcessManager processManager = new ProcessManager(Main.class);
+        processManager.run();
 
 
     }

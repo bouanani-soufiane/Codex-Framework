@@ -1,4 +1,4 @@
-package com.codex.framework.DIContainer;
+package com.codex.framework;
 
 import org.burningwave.core.assembler.ComponentContainer;
 import org.burningwave.core.classes.ClassCriteria;
@@ -9,9 +9,9 @@ import java.lang.annotation.Annotation;
 import java.util.Collection;
 
 public class AnnotationScanner {
-    private Class<? extends Annotation> annotation;
+    private Class<?> annotation;
 
-    public AnnotationScanner ( Class<? extends Annotation> annotation) {
+    public AnnotationScanner ( Class<?> annotation) {
         this.annotation = annotation;
     }
 
@@ -26,7 +26,7 @@ public class AnnotationScanner {
         try (final ClassHunter.SearchResult result = classHunter.findBy(
                 SearchConfig.forResources(packageName)
                         .by(ClassCriteria.create()
-                                .allThoseThatMatch((cls) -> !cls.isAnnotation() && cls.isAnnotationPresent(annotation)))
+                                .allThoseThatMatch((cls) -> !cls.isAnnotation() && cls.isAnnotationPresent((Class<? extends Annotation>) annotation)))
         )
         ) {
             return result.getClasses();
