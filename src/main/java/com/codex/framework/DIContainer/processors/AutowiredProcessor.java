@@ -1,6 +1,6 @@
-package com.codex.framework.DI.processors;
+package com.codex.framework.DIContainer.processors;
 
-import com.codex.framework.DI.annotations.Autowired;
+import com.codex.framework.DIContainer.annotations.Autowired;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;

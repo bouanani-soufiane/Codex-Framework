@@ -1,4 +1,4 @@
-package com.codex.framework.DI;
+package com.codex.framework.DIContainer;
 
 import org.burningwave.core.assembler.ComponentContainer;
 import org.burningwave.core.classes.ClassCriteria;

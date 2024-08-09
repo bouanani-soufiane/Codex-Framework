@@ -1,1 +1,1 @@
-com.codex.framework.DI.processors.AutowiredProcessor
+com.codex.framework.DIContainer.processors.AutowiredProcessor

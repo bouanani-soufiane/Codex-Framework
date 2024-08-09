@@ -1,9 +1,9 @@
-package com.codex.framework.DI;
+package com.codex.framework.DIContainer;
 
-import com.codex.framework.DI.annotations.Autowired;
-import com.codex.framework.DI.annotations.Component;
-import com.codex.framework.DI.annotations.Qualifier;
-import com.codex.framework.DI.utils.Utils;
+import com.codex.framework.DIContainer.annotations.Autowired;
+import com.codex.framework.DIContainer.annotations.Component;
+import com.codex.framework.DIContainer.annotations.Qualifier;
+import com.codex.framework.DIContainer.utils.Utils;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;

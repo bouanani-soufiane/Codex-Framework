@@ -1,4 +1,4 @@
-package com.codex.framework.DI.annotations;
+package com.codex.framework.EntityManager.annotations.Entity;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,5 +7,6 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Component{
+public @interface Table {
+    String name() ;
 }

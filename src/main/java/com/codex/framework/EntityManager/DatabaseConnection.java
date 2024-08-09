@@ -1,7 +1,7 @@
-package com.codex.framework.ORM;
+package com.codex.framework.EntityManager;
 
-import com.codex.framework.ORM.utils.Print;
-import com.codex.framework.ORM.utils.env;
+import com.codex.framework.EntityManager.utils.Print;
+import com.codex.framework.EntityManager.utils.env;
 
 import java.sql.*;
 

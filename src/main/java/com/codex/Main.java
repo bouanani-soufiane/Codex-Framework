@@ -1,11 +1,8 @@
 package com.codex;
-import com.codex.framework.DI.Injector;
-import com.codex.framework.ORM.DatabaseConnection;
+import com.codex.framework.DIContainer.Injector;
+import com.codex.framework.EntityManager.DatabaseConnection;
 import com.codex.testing.Book;
-import com.codex.testing.User2;
 import com.codex.testing.interfaces.IBook;
-
-import java.sql.Connection;
 
 
 public class Main {

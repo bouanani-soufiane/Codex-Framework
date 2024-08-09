@@ -1,4 +1,4 @@
-package com.codex.framework.ORM.utils;
+package com.codex.framework.EntityManager.utils;
 
 import java.util.Scanner;
 

@@ -1,7 +1,7 @@
     package com.codex.testing;
-    import com.codex.framework.DI.annotations.Autowired;
-    import com.codex.framework.DI.annotations.Component;
-    import com.codex.framework.DI.annotations.Qualifier;
+    import com.codex.framework.DIContainer.annotations.Autowired;
+    import com.codex.framework.DIContainer.annotations.Component;
+    import com.codex.framework.DIContainer.annotations.Qualifier;
     import com.codex.testing.interfaces.IBook;
     import com.codex.testing.interfaces.IUser;
 

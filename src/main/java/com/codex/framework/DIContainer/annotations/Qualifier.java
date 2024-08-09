@@ -1,4 +1,4 @@
-package com.codex.framework.DI.annotations;
+package com.codex.framework.DIContainer.annotations;
 
 import java.lang.annotation.*;
 
