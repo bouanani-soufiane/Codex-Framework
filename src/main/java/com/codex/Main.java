@@ -1,6 +1,6 @@
 package com.codex;
 import com.codex.framework.DIContainer.Injector;
-import com.codex.framework.EntityManager.Core.DatabaseConnection;
+import com.codex.framework.EntityManager.Core.connection.DatabaseConnection;
 import com.codex.framework.EntityManager.Core.ProcessManager;
 import com.codex.testing.Components.Book;
 import com.codex.testing.Components.interfaces.IBook;
