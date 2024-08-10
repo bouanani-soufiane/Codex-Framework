@@ -10,6 +10,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collection;
+import java.util.Objects;
 
 public class SchemaGenerator {
 
@@ -30,22 +31,26 @@ public class SchemaGenerator {
                     query.append("( ").append(field.getName()).append( " INT PRIMARY KEY ,");
                 }
                 if (field.isAnnotationPresent(Column.class)) {
-                    String name = field.isAnnotationPresent(Column.class) ? field.getAnnotation(Column.class).name() : field.getName();
+                    String name = field.isAnnotationPresent(Column.class) && !field.getAnnotation(Column.class).name().isEmpty() ? field.getAnnotation(Column.class).name() : field.getName();
+                    String type = Resolver.resolveType(field);
                     query.append(" ").append(name + " ").append(field.getAnnotation(Column.class).type());
+                    System.out.println("here:  "+type);
                 }
             }
             query.append(" );");
 
-            System.out.println(query.toString());
-
-            try (Statement stmt = conn.createStatement()) {
-                stmt.executeUpdate(query.toString());
-                System.out.println("Table " + table + " created successfully.");
-            } catch (SQLException e) {
-                System.err.println("Error creating table " + table + ": " + e.getMessage());
-            }
+//            System.out.println(query.toString());
+//
+//            try (Statement stmt = conn.createStatement()) {
+//                stmt.executeUpdate(query.toString());
+//                System.out.println("Table " + table + " created successfully.");
+//            } catch (SQLException e) {
+//                System.err.println("Error creating table " + table + ": " + e.getMessage());
+//            }
         }
     }
+
+
     public void addConstraints(){
 
     }

@@ -5,8 +5,10 @@ import com.codex.framework.EntityManager.Annotations.Entity.Entity;
 import com.codex.framework.EntityManager.Annotations.Id.ID;
 
 @Entity
-public class Employee {
+public class Test {
     @ID
-    private int id;
-    private String name;
+    private String id;
+    @Column
+    private Types name;
 }
+
