@@ -20,7 +20,7 @@ public class ProcessManager {
         this.schemaGenerator = new SchemaGenerator(entities);
 
     }
-    public void run() throws IllegalAccessException, NoSuchMethodException {
+    public void run() throws IllegalAccessException, NoSuchMethodException, SQLException {
 
        this.schemaGenerator.generateSchema();
 

@@ -8,5 +8,6 @@ import com.codex.framework.EntityManager.Annotations.Id.ID;
 public class Employee {
     @ID
     private int id;
+    @Column(name = "user_name" )
     private String name;
 }

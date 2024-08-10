@@ -10,6 +10,6 @@ public class Depaetement {
     @ID
     private Long id;
 
-    @Column(name = "name_dep" ,type = "VARCHAR(255)")
+    @Column(name = "name_dep" )
     private String depaetementName;
 }
