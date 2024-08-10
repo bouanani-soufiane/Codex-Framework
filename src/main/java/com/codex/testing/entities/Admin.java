@@ -18,7 +18,7 @@ public class Admin {
     private String id;
     @Column
     private String name;
-    @Column
+    @Column(length = 100 )
     private String password;
     @Column(name = "byte" , nullable = true , unique = true)
     private byte email;
@@ -38,7 +38,7 @@ public class Admin {
     private Timestamp timestampEE;
     @Column
     private BigDecimal bigDecimalEE;
-    @Column
+    @Column(length = 100, scale = 3)
     private BigInteger bigIntegerEE;
     @Column
     private LocalDate localDateEE;

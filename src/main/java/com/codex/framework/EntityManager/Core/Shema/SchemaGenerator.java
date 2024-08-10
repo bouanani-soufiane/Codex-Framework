@@ -27,17 +27,22 @@ public class SchemaGenerator {
             String table = entity.isAnnotationPresent(Table.class) ? entity.getAnnotation(Table.class).name() : entity.getSimpleName();
             StringBuilder query = new StringBuilder("CREATE TABLE IF NOT EXISTS " + table + "(\n");
             for (Field field : entity.getDeclaredFields()) {
+
                 if (field.isAnnotationPresent(ID.class)) {
                     query.append("\t").append(field.getName()).append( " INT PRIMARY KEY , ");
                 }
                 if (field.isAnnotationPresent(Column.class)) {
+                    Column column = field.getAnnotation(Column.class);
                     if(field.getType().isEnum()){
                         Resolver.getOrCreateEnum(field.getType(),conn);
                     }
-                    String name = field.getAnnotation(Column.class).name().isEmpty() ? field.getName() : field.getAnnotation(Column.class).name()  ;
+                    String name = column.name().isEmpty() ? field.getName() : column.name()  ;
                     String type =  field.getType().isEnum() ? field.getType().getSimpleName() : Resolver.resolveType(field);
-                    String nullable = field.getAnnotation(Column.class).nullable() ? " NULL" : " NOT NULL";
-                    String unique = field.getAnnotation(Column.class).unique() ? " UNIQUE" : "";
+                    if(column.length() > 0 || column.scale() > 0){
+                        type = resolveTypeWihtLenght(type , column.length() , column.scale());
+                    }
+                    String nullable = column.nullable() ? " NULL" : " NOT NULL";
+                    String unique = column.unique() ? " UNIQUE" : "";
                     query.append("\n \t").append(name + " ").append(type).append(nullable).append(unique).append(", ");
                 }
             }
@@ -56,6 +61,15 @@ public class SchemaGenerator {
         }
     }
 
+    private String resolveTypeWihtLenght ( String type, int length , int scale) {
+        return
+                "VARCHAR".equals(type) || "CHAR".equals(type)
+                        ? type + "(" + length + ")"
+                        : "NUMERIC".equals(type)
+                        ? type + "(" + length + "," + scale + ")"
+                        : type;
+
+    }
 
 
     public void addConstraints(){
