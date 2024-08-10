@@ -33,11 +33,11 @@ public abstract class Resolver {
                     break;
                 case "double":
                 case "Double":
-                    type = "DOUBLE";
+                    type = "DOUBLE PRECISION";
                     break;
                 case "float":
                 case "Float":
-                    type = "FLOAT";
+                    type = "REAL";
                     break;
                 case "char":
                 case "Character":
@@ -45,8 +45,6 @@ public abstract class Resolver {
                     break;
                 case "byte":
                 case "Byte":
-                    type = "TINYINT";
-                    break;
                 case "short":
                 case "Short":
                     type = "SMALLINT";
