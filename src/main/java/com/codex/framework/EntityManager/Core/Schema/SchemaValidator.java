@@ -1,4 +1,4 @@
-package com.codex.framework.EntityManager.Core.Shema;
+package com.codex.framework.EntityManager.Core.Schema;
 
 public class SchemaValidator {
     //Validates existing schemas against entity definitions.

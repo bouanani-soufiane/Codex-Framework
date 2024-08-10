@@ -2,7 +2,7 @@ package com.codex.framework.EntityManager.Core;
 
 import com.codex.framework.AnnotationScanner;
 import com.codex.framework.EntityManager.Annotations.Entity.Entity;
-import com.codex.framework.EntityManager.Core.Shema.SchemaGenerator;
+import com.codex.framework.EntityManager.Core.Schema.SchemaGenerator;
 
 import java.sql.SQLException;
 import java.util.Collection;

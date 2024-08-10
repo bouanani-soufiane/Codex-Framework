@@ -1,4 +1,4 @@
-package com.codex.framework.EntityManager.Core.Shema;
+package com.codex.framework.EntityManager.Core.Schema;
 
 import com.codex.framework.EntityManager.Annotations.Column.Column;
 import com.codex.framework.EntityManager.Annotations.Entity.Table;
@@ -91,7 +91,6 @@ public class SchemaGenerator {
             throw e;
         }
     }
-
 
 
     public void addConstraints(){
