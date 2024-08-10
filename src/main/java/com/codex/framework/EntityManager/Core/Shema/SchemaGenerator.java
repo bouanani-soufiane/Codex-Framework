@@ -10,66 +10,88 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collection;
-import java.util.Objects;
 
 public class SchemaGenerator {
 
-    private Collection<Class<?>> entities;
-    private Connection conn;
+    private final Collection<Class<?>> entities;
+    private final Connection conn;
+
     public SchemaGenerator(Collection<Class<?>> entities) throws SQLException {
         this.entities = entities;
         this.conn = DatabaseConnection.getInstance().getConnection();
-
     }
 
     public void generateSchema() throws SQLException {
         for (Class<?> entity : entities) {
-            String table = entity.isAnnotationPresent(Table.class) ? entity.getAnnotation(Table.class).name() : entity.getSimpleName();
-            StringBuilder query = new StringBuilder("CREATE TABLE IF NOT EXISTS " + table + "(\n");
-            for (Field field : entity.getDeclaredFields()) {
-
-                if (field.isAnnotationPresent(ID.class)) {
-                    query.append("\t").append(field.getName()).append( " INT PRIMARY KEY , ");
-                }
-                if (field.isAnnotationPresent(Column.class)) {
-                    Column column = field.getAnnotation(Column.class);
-                    if(field.getType().isEnum()){
-                        Resolver.getOrCreateEnum(field.getType(),conn);
-                    }
-                    String name = column.name().isEmpty() ? field.getName() : column.name()  ;
-                    String type =  field.getType().isEnum() ? field.getType().getSimpleName() : Resolver.resolveType(field);
-                    if(column.length() > 0 || column.scale() > 0){
-                        type = resolveTypeWihtLenght(type , column.length() , column.scale());
-                    }
-                    String nullable = column.nullable() ? " NULL" : " NOT NULL";
-                    String unique = column.unique() ? " UNIQUE" : "";
-                    query.append("\n \t").append(name + " ").append(type).append(nullable).append(unique).append(", ");
-                }
-            }
-            query.setLength(query.length()-2);
-            query.append("\n);");
-
-
-            try (Statement stmt = conn.createStatement()) {
-                stmt.executeUpdate(query.toString());
-                System.out.println("Table " + table + " created successfully.");
-                System.out.println(query);
-
-            } catch (SQLException e) {
-                System.err.println("Error creating table " + table + " with : " + query + " \n" + e.getMessage());
-            }
+            String tableName = getTableName(entity);
+            String tableCreationQuery = buildCreateTableQuery(entity, tableName);
+            executeTableCreation(tableName, tableCreationQuery);
         }
     }
 
-    private String resolveTypeWihtLenght ( String type, int length , int scale) {
-        return
-                "VARCHAR".equals(type) || "CHAR".equals(type)
-                        ? type + "(" + length + ")"
-                        : "NUMERIC".equals(type)
-                        ? type + "(" + length + "," + scale + ")"
-                        : type;
-
+    private String getTableName(Class<?> entity) {
+        return entity.isAnnotationPresent(Table.class) ?
+                entity.getAnnotation(Table.class).name() :
+                entity.getSimpleName();
     }
+
+    private String buildCreateTableQuery(Class<?> entity, String tableName) throws SQLException {
+        StringBuilder query = new StringBuilder(String.format("CREATE TABLE IF NOT EXISTS %s (\n", tableName));
+
+        for (Field field : entity.getDeclaredFields()) {
+            if (field.isAnnotationPresent(ID.class)) {
+                query.append(buildPrimaryKeyColumn(field));
+            }
+            if (field.isAnnotationPresent(Column.class)) {
+                query.append(buildColumnDefinition(field));
+            }
+        }
+        removeTrailingComma(query);
+        query.append("\n);");
+
+        return query.toString();
+    }
+
+    private String buildPrimaryKeyColumn(Field field) {
+        return String.format("\t%s INT PRIMARY KEY,\n", field.getName());
+    }
+
+    private String buildColumnDefinition(Field field) throws SQLException {
+        Column column = field.getAnnotation(Column.class);
+
+        String type = field.getType().isEnum() ? field.getType().getSimpleName() : Resolver.resolveType(field);
+        if (column.length() > 0 || column.scale() > 0) {
+            type = Resolver.resolveTypeWihtLenght(type, column.length(), column.scale());
+        }
+
+        if (field.getType().isEnum()) Resolver.CreateEnum(field.getType(), conn);
+
+        return String.format("\t%s %s %s %s,\n",
+                column.name().isEmpty() ? field.getName() : column.name(),
+                type,
+                column.nullable() ? "NULL" : "NOT NULL",
+                column.unique() ? "UNIQUE" : ""
+        );
+    }
+
+    private void removeTrailingComma(StringBuilder query) {
+        int lastCommaIndex = query.lastIndexOf(",");
+        if (lastCommaIndex != -1) {
+            query.deleteCharAt(lastCommaIndex);
+        }
+    }
+
+    private void executeTableCreation(String tableName, String query) throws SQLException {
+        try (Statement stmt = conn.createStatement()) {
+            stmt.executeUpdate(query);
+            System.out.printf("Table %s created successfully.\n", tableName);
+            System.out.println(query);
+        } catch (SQLException e) {
+            System.err.printf("Error creating table %s with query: %s\n%s\n", tableName, query, e.getMessage());
+            throw e;
+        }
+    }
+
 
 
     public void addConstraints(){

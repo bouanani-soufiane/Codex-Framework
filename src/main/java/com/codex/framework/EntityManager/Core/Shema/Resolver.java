@@ -98,7 +98,7 @@ public abstract class Resolver {
         return enumValues.toString();
     }
 
-    static void getOrCreateEnum ( Class<?> type , Connection conn ) throws SQLException {
+    static void CreateEnum ( Class<?> type , Connection conn ) throws SQLException {
 
         String query = "DO $$\n" +
                 "BEGIN\n" +
@@ -115,6 +115,15 @@ public abstract class Resolver {
                     +" for query" + query
                     + "\n : " + e.getMessage());
         }
+
+    }
+    static String resolveTypeWihtLenght ( String type, int length , int scale) {
+        return
+                "VARCHAR".equals(type) || "CHAR".equals(type)
+                        ? type + "(" + length + ")"
+                        : "NUMERIC".equals(type)
+                        ? type + "(" + length + "," + scale + ")"
+                        : type;
 
     }
 
