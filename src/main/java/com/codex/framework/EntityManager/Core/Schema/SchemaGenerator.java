@@ -3,6 +3,7 @@ package com.codex.framework.EntityManager.Core.Schema;
 import com.codex.framework.EntityManager.Annotations.Column.Column;
 import com.codex.framework.EntityManager.Annotations.Entity.Table;
 import com.codex.framework.EntityManager.Annotations.Id.ID;
+import com.codex.framework.EntityManager.Core.Schema.Constraints.ManyToOneHandler;
 import com.codex.framework.EntityManager.Core.Schema.Constraints.OneToOneHandler;
 import com.codex.framework.EntityManager.Core.connection.DatabaseConnection;
 
@@ -101,6 +102,7 @@ public class SchemaGenerator {
     private void addConstraints() throws SQLException {
         for (Class<?> entity : entities) {
             OneToOneHandler.addConstraint(entity, conn);
+            ManyToOneHandler.addConstraints(entity, conn);
         }
     }
 }

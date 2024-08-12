@@ -4,6 +4,8 @@ import com.codex.framework.EntityManager.Annotations.Column.Column;
 import com.codex.framework.EntityManager.Annotations.Entity.Entity;
 import com.codex.framework.EntityManager.Annotations.Entity.Table;
 import com.codex.framework.EntityManager.Annotations.Id.ID;
+import com.codex.framework.EntityManager.Annotations.Relationship.ManyToMany;
+import com.codex.framework.EntityManager.Annotations.Relationship.ManyToOne;
 import com.codex.framework.EntityManager.Annotations.Relationship.OneToOne;
 import com.codex.testing.Components.User;
 
@@ -55,7 +57,7 @@ public class Admin {
     private UUID uuid;
     @Column
     private Types enumType;
-    @OneToOne()
+    @ManyToOne()
     private Employee employee_id;
 
 }
