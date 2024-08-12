@@ -1,7 +1,6 @@
 package com.codex.framework.EntityManager.Core.Schema;
 
 import com.codex.framework.EntityManager.Annotations.Column.Column;
-
 import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.SQLException;

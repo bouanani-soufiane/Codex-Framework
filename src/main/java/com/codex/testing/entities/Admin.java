@@ -2,7 +2,11 @@ package com.codex.testing.entities;
 
 import com.codex.framework.EntityManager.Annotations.Column.Column;
 import com.codex.framework.EntityManager.Annotations.Entity.Entity;
+import com.codex.framework.EntityManager.Annotations.Entity.Table;
 import com.codex.framework.EntityManager.Annotations.Id.ID;
+import com.codex.framework.EntityManager.Annotations.Relationship.OneToOne;
+import com.codex.testing.Components.User;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Timestamp;
@@ -13,6 +17,7 @@ import java.util.Date;
 import java.util.UUID;
 
 @Entity
+@Table(name = "Administrator")
 public class Admin {
     @ID
     private String id;
@@ -48,5 +53,9 @@ public class Admin {
     private LocalTime localTimeEE;
     @Column
     private UUID uuid;
+    @Column
+    private Types enumType;
+    @OneToOne()
+    private Employee employee_id;
 
 }

@@ -4,9 +4,10 @@ import com.codex.framework.EntityManager.Annotations.Column.Column;
 import com.codex.framework.EntityManager.Annotations.Entity.Entity;
 import com.codex.framework.EntityManager.Annotations.Id.ID;
 
+@Entity
 public class Employee {
-    @ID
+    @ID()
     private int id;
-    @Column(name = "user_name" )
+    @Column(name = "em_name" )
     private String name;
 }
