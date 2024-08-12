@@ -5,13 +5,14 @@ import com.codex.framework.EntityManager.Annotations.Relationship.JoinColumn;
 import com.codex.framework.EntityManager.Core.Schema.SchemaGenerator;
 
 import java.lang.reflect.Field;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 public class OneToOneHandler {
 
-    public static void addConstraint(Class<?> entity, Connection conn) throws SQLException {
+    public static List<String> collectConstraints(Class<?> entity) {
+        List<String> queries = new ArrayList<>();
+
         for (Field field : entity.getDeclaredFields()) {
             if (field.isAnnotationPresent(com.codex.framework.EntityManager.Annotations.Relationship.OneToOne.class)) {
                 String tableName = SchemaGenerator.getTableName(entity);
@@ -24,9 +25,11 @@ public class OneToOneHandler {
                         tableName, fieldName, fieldName, fieldName, referencedTable, referencedPrimaryKey
                 );
 
-                executeQuery(query, conn);
+                queries.add(query);
             }
         }
+
+        return queries;
     }
 
     private static String resolveFieldName(Field field) {
@@ -43,14 +46,5 @@ public class OneToOneHandler {
         }
         throw new IllegalArgumentException("No @Id annotation found in " + entityClass.getSimpleName());
     }
-
-    private static void executeQuery(String query, Connection conn) throws SQLException {
-        try (Statement stmt = conn.createStatement()) {
-            stmt.executeUpdate(query);
-            System.out.println("Executed query: " + query);
-        } catch (SQLException e) {
-            System.err.println("Error executing query: " + query + "\nError: " + e.getMessage());
-            throw e;
-        }
-    }
 }
+

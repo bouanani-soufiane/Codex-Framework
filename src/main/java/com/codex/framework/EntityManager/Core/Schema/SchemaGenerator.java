@@ -1,3 +1,4 @@
+
 package com.codex.framework.EntityManager.Core.Schema;
 
 import com.codex.framework.EntityManager.Annotations.Column.Column;
@@ -12,6 +13,8 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SchemaGenerator {
 
@@ -24,12 +27,20 @@ public class SchemaGenerator {
     }
 
     public void generateSchema() throws SQLException {
+        List<String> tableCreationQueries = new ArrayList<>();
+        List<String> constraintQueries = new ArrayList<>();
+
         for (Class<?> entity : entities) {
             String tableName = getTableName(entity);
             String tableCreationQuery = buildCreateTableQuery(entity, tableName);
-            executeTableCreation(tableName, tableCreationQuery);
+            tableCreationQueries.add(tableCreationQuery);
+
+            constraintQueries.addAll(OneToOneHandler.collectConstraints(entity));
+            constraintQueries.addAll(ManyToOneHandler.collectConstraints(entity));
         }
-        addConstraints();
+
+        executeBatch(tableCreationQueries);
+        executeBatch(constraintQueries);
     }
 
     public static String getTableName(Class<?> entity) {
@@ -88,21 +99,16 @@ public class SchemaGenerator {
         }
     }
 
-    private void executeTableCreation(String tableName, String query) throws SQLException {
+    private void executeBatch(List<String> queries) throws SQLException {
         try (Statement stmt = conn.createStatement()) {
-            stmt.executeUpdate(query);
-            System.out.printf("Table %s created successfully.\n", tableName);
-            System.out.println(query);
+            for (String query : queries) {
+                stmt.addBatch(query);
+            }
+            stmt.executeBatch();
+            System.out.println("Batch executed successfully.");
         } catch (SQLException e) {
-            System.err.printf("Error creating table %s with query: %s\n%s\n", tableName, query, e.getMessage());
+            System.err.println("Error executing batch: " + e.getMessage());
             throw e;
-        }
-    }
-
-    private void addConstraints() throws SQLException {
-        for (Class<?> entity : entities) {
-            OneToOneHandler.addConstraint(entity, conn);
-            ManyToOneHandler.addConstraints(entity, conn);
         }
     }
 }

@@ -9,5 +9,4 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ManyToMany {
     String mappedBy() default "";
-    String joinTable() default "";
 }
