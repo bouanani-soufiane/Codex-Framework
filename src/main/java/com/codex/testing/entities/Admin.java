@@ -5,7 +5,12 @@ import com.codex.framework.EntityManager.Annotations.Entity.Entity;
 import com.codex.framework.EntityManager.Annotations.Entity.Table;
 import com.codex.framework.EntityManager.Annotations.Id.ID;
 
+import com.codex.framework.EntityManager.Annotations.Relationship.JoinColumn;
+import com.codex.framework.EntityManager.Annotations.Relationship.JoinTable;
+import com.codex.framework.EntityManager.Annotations.Relationship.ManyToMany;
 import com.codex.framework.EntityManager.Annotations.Relationship.ManyToOne;
+
+import java.util.Set;
 
 
 @Entity
@@ -18,6 +23,13 @@ public class Admin {
     @ManyToOne()
     private Employee employee_id;
 
+    @ManyToMany()
+    @JoinTable(
+            name = "admin_roles",
+            joinColumns = @JoinColumn(name = "admin_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id" )
+    )
+    private Set<Roles> roles;
 
 
 }
