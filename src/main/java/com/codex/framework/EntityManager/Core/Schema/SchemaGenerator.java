@@ -99,37 +99,40 @@ public class SchemaGenerator {
         }
     }
 
-
     public void addConstraints() throws SQLException {
-        for(Class<?> entity : entities){
-            oneToOne(entity);
+        for (Class<?> entity : entities) {
+            addOneToOneConstraints(entity);
         }
     }
 
-    public void oneToOne(Class<?> entity) throws SQLException {
-        String query = "";
-
+    private void addOneToOneConstraints(Class<?> entity) throws SQLException {
         for (Field field : entity.getDeclaredFields()) {
             if (field.isAnnotationPresent(OneToOne.class)) {
-
                 String tableName = getTableName(entity);
-                String fieldName = field.isAnnotationPresent(JoinColumn.class) && !field.getAnnotation(JoinColumn.class).name().isEmpty() ? field.getAnnotation(JoinColumn.class).name() : field.getName();
-                String reference = field.getType().getSimpleName().toLowerCase();
-                String referencePK = getPrimaryKeyColumnName(field.getType());                //String referencePK = "em_id";
-                query = "ALTER TABLE "+ tableName+ "\n" + "ADD COLUMN " + fieldName+ " BIGINT,\n"
-                + "ADD CONSTRAINT " + "fk_" + fieldName + " FOREIGN KEY (" + fieldName + ")" + " REFERENCES " + reference + "("+referencePK+")" + ";";
+                String fieldName = resolveFieldName(field);
+                String referencedTable = getTableName(field.getType());
+                String referencedPrimaryKey = getPrimaryKeyColumnName(field.getType());
 
+                String query = String.format(
+                        "ALTER TABLE %s ADD COLUMN %s BIGINT, ADD CONSTRAINT fk_%s FOREIGN KEY (%s) REFERENCES %s(%s);",
+                        tableName, fieldName, fieldName, fieldName, referencedTable, referencedPrimaryKey
+                );
 
+                executeQuery(query);
             }
         }
-
-        try(Statement stmt = conn.createStatement()){
-            stmt.executeUpdate(query);
-        }catch (Exception e){
-            throw new SQLException(e);
-        }
-
     }
+
+    private String resolveFieldName(Field field) {
+        if (field.isAnnotationPresent(JoinColumn.class)) {
+            JoinColumn joinColumn = field.getAnnotation(JoinColumn.class);
+            if (!joinColumn.name().isEmpty()) {
+                return joinColumn.name();
+            }
+        }
+        return field.getName();
+    }
+
     private String getPrimaryKeyColumnName(Class<?> entityClass) {
         for (Field field : entityClass.getDeclaredFields()) {
             if (field.isAnnotationPresent(ID.class)) {
@@ -140,5 +143,13 @@ public class SchemaGenerator {
         throw new IllegalArgumentException("No @Id annotation found in " + entityClass.getSimpleName());
     }
 
-
+    private void executeQuery(String query) throws SQLException {
+        try (Statement stmt = conn.createStatement()) {
+            stmt.executeUpdate(query);
+            System.out.println("Executed query: " + query);
+        } catch (SQLException e) {
+            System.err.println("Error executing query: " + query + "\nError: " + e.getMessage());
+            throw e;
+        }
+    }
 }
