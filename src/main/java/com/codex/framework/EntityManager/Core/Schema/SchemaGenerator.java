@@ -3,8 +3,7 @@ package com.codex.framework.EntityManager.Core.Schema;
 import com.codex.framework.EntityManager.Annotations.Column.Column;
 import com.codex.framework.EntityManager.Annotations.Entity.Table;
 import com.codex.framework.EntityManager.Annotations.Id.ID;
-import com.codex.framework.EntityManager.Annotations.Relationship.JoinColumn;
-import com.codex.framework.EntityManager.Annotations.Relationship.OneToOne;
+import com.codex.framework.EntityManager.Core.Schema.Constraints.OneToOneHandler;
 import com.codex.framework.EntityManager.Core.connection.DatabaseConnection;
 
 import java.lang.reflect.Field;
@@ -32,10 +31,9 @@ public class SchemaGenerator {
         addConstraints();
     }
 
-    private String getTableName(Class<?> entity) {
-        return entity.isAnnotationPresent(Table.class) ?
-                entity.getAnnotation(Table.class).name() :
-                entity.getSimpleName();
+    public static String getTableName(Class<?> entity) {
+        Table tableAnnotation = entity.getAnnotation(Table.class);
+        return (tableAnnotation != null && !tableAnnotation.name().isEmpty()) ? tableAnnotation.name() : entity.getSimpleName();
     }
 
     private String buildCreateTableQuery(Class<?> entity, String tableName) throws SQLException {
@@ -43,13 +41,13 @@ public class SchemaGenerator {
 
         for (Field field : entity.getDeclaredFields()) {
             if (field.isAnnotationPresent(ID.class)) {
-                query.append("\t").append(buildPrimaryKeyColumn(field)).append(" INT PRIMARY KEY,\n");
+                query.append(buildPrimaryKeyColumn(field));
             }
             if (field.isAnnotationPresent(Column.class)) {
                 query.append(buildColumnDefinition(field));
             }
         }
-        System.out.println("here : PK : "+ query);
+
         removeTrailingComma(query);
         query.append("\n);");
 
@@ -58,10 +56,9 @@ public class SchemaGenerator {
 
     private String buildPrimaryKeyColumn(Field field) {
         ID idAnnotation = field.getAnnotation(ID.class);
-        return (idAnnotation != null && !idAnnotation.name().isEmpty()) ? idAnnotation.name() : field.getName();
-
+        String columnName = (idAnnotation != null && !idAnnotation.name().isEmpty()) ? idAnnotation.name() : field.getName();
+        return String.format("\t%s INT PRIMARY KEY,\n", columnName);
     }
-
 
     private String buildColumnDefinition(Field field) throws SQLException {
         Column column = field.getAnnotation(Column.class);
@@ -71,7 +68,9 @@ public class SchemaGenerator {
             type = Resolver.resolveTypeWihtLenght(type, column.length(), column.scale());
         }
 
-        if (field.getType().isEnum()) Resolver.CreateEnum(field.getType(), conn);
+        if (field.getType().isEnum()) {
+            Resolver.CreateEnum(field.getType(), conn);
+        }
 
         return String.format("\t%s %s %s %s,\n",
                 column.name().isEmpty() ? field.getName() : column.name(),
@@ -99,57 +98,9 @@ public class SchemaGenerator {
         }
     }
 
-    public void addConstraints() throws SQLException {
+    private void addConstraints() throws SQLException {
         for (Class<?> entity : entities) {
-            addOneToOneConstraints(entity);
-        }
-    }
-
-    private void addOneToOneConstraints(Class<?> entity) throws SQLException {
-        for (Field field : entity.getDeclaredFields()) {
-            if (field.isAnnotationPresent(OneToOne.class)) {
-                String tableName = getTableName(entity);
-                String fieldName = resolveFieldName(field);
-                String referencedTable = getTableName(field.getType());
-                String referencedPrimaryKey = getPrimaryKeyColumnName(field.getType());
-
-                String query = String.format(
-                        "ALTER TABLE %s ADD COLUMN %s BIGINT, ADD CONSTRAINT fk_%s FOREIGN KEY (%s) REFERENCES %s(%s);",
-                        tableName, fieldName, fieldName, fieldName, referencedTable, referencedPrimaryKey
-                );
-
-                executeQuery(query);
-            }
-        }
-    }
-
-    private String resolveFieldName(Field field) {
-        if (field.isAnnotationPresent(JoinColumn.class)) {
-            JoinColumn joinColumn = field.getAnnotation(JoinColumn.class);
-            if (!joinColumn.name().isEmpty()) {
-                return joinColumn.name();
-            }
-        }
-        return field.getName();
-    }
-
-    private String getPrimaryKeyColumnName(Class<?> entityClass) {
-        for (Field field : entityClass.getDeclaredFields()) {
-            if (field.isAnnotationPresent(ID.class)) {
-                ID idAnnotation = field.getAnnotation(ID.class);
-                return (idAnnotation != null && !idAnnotation.name().isEmpty()) ? idAnnotation.name() : field.getName();
-            }
-        }
-        throw new IllegalArgumentException("No @Id annotation found in " + entityClass.getSimpleName());
-    }
-
-    private void executeQuery(String query) throws SQLException {
-        try (Statement stmt = conn.createStatement()) {
-            stmt.executeUpdate(query);
-            System.out.println("Executed query: " + query);
-        } catch (SQLException e) {
-            System.err.println("Error executing query: " + query + "\nError: " + e.getMessage());
-            throw e;
+            OneToOneHandler.addConstraint(entity, conn);
         }
     }
 }
