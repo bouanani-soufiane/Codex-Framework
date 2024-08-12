@@ -1,5 +1,7 @@
 package com.codex.framework.EntityManager.Core.Schema.Constraints;
 
+import com.codex.framework.EntityManager.Annotations.Relationship.OneToOne;
+
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,15 +20,22 @@ public class OneToOneHandler {
         List<String> queries = new ArrayList<>();
 
         for (Field field : entity.getDeclaredFields()) {
-            if (field.isAnnotationPresent(com.codex.framework.EntityManager.Annotations.Relationship.OneToOne.class)) {
+            if (field.isAnnotationPresent(OneToOne.class)) {
+                OneToOne oneToOne = field.getAnnotation(OneToOne.class);
                 String tableName = getTableName(entity);
                 String fieldName = resolveFieldName(field);
                 String referencedTable = getTableName(field.getType());
                 String referencedPrimaryKey = getPrimaryKeyColumnName(field.getType());
+                String cascadeType = oneToOne.cascade();
+
 
                 String query = String.format(
-                        "ALTER TABLE %s ADD COLUMN %s BIGINT, ADD CONSTRAINT fk_%s FOREIGN KEY (%s) REFERENCES %s(%s);",
-                        tableName, fieldName, fieldName, fieldName, referencedTable, referencedPrimaryKey
+                        "ALTER TABLE %s \n" +
+                                "\tADD COLUMN %s BIGINT, \n" +
+                                "\tADD CONSTRAINT fk_%s FOREIGN KEY (%s) \n" +
+                                "\tREFERENCES %s(%s) %s;\n",
+                        tableName, fieldName, fieldName, fieldName, referencedTable, referencedPrimaryKey,
+                        CascadeType.valueOf(cascadeType.toUpperCase()).toSql()
                 );
 
                 queries.add(query);

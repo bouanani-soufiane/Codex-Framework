@@ -147,7 +147,10 @@ public class SchemaGenerator {
                 stmt.addBatch(query);
             }
             stmt.executeBatch();
-            System.out.println("Batch executed successfully.");
+            System.out.println("Batch executed successfully.\n");
+            for (String query : queries) {
+                System.out.println(query + "\n");
+            }
         } catch (SQLException e) {
             System.err.println("Error executing batch: " + e.getMessage());
             throw e;

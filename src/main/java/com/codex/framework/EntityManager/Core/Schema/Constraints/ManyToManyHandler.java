@@ -64,12 +64,12 @@ public class ManyToManyHandler {
                 joinColumnNames[0],
                 inverseJoinColumnNames[0]
         ));
-        query.append(String.format("FOREIGN KEY (%s) REFERENCES %s(%s),\n",
+        query.append(String.format("\tFOREIGN KEY (%s) REFERENCES %s(%s),\n",
                 joinColumnNames[0],
                 getTableName(entity),
                 getPrimaryKeyColumnName(entity)
         ));
-        query.append(String.format("FOREIGN KEY (%s) REFERENCES %s(%s)\n",
+        query.append(String.format("\tFOREIGN KEY (%s) REFERENCES %s(%s)\n",
                 inverseJoinColumnNames[0],
                 getTableName(field),
                 getPrimaryKeyColumnName(field)
