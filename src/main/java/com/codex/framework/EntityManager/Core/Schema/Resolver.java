@@ -7,40 +7,11 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 
 public abstract class Resolver {
 
-    private static final Map<String, String> TYPE_MAP = new HashMap<>();
-
-    static {
-        TYPE_MAP.put("String", "VARCHAR");
-        TYPE_MAP.put("int", "INTEGER");
-        TYPE_MAP.put("Integer", "INTEGER");
-        TYPE_MAP.put("long", "BIGINT");
-        TYPE_MAP.put("Long", "BIGINT");
-        TYPE_MAP.put("boolean", "BOOLEAN");
-        TYPE_MAP.put("Boolean", "BOOLEAN");
-        TYPE_MAP.put("double", "DOUBLE PRECISION");
-        TYPE_MAP.put("Double", "DOUBLE PRECISION");
-        TYPE_MAP.put("float", "REAL");
-        TYPE_MAP.put("Float", "REAL");
-        TYPE_MAP.put("char", "CHAR");
-        TYPE_MAP.put("Character", "CHAR");
-        TYPE_MAP.put("byte", "SMALLINT");
-        TYPE_MAP.put("Byte", "SMALLINT");
-        TYPE_MAP.put("short", "SMALLINT");
-        TYPE_MAP.put("Short", "SMALLINT");
-        TYPE_MAP.put("Date", "DATE");
-        TYPE_MAP.put("Timestamp", "TIMESTAMP");
-        TYPE_MAP.put("BigDecimal", "DECIMAL");
-        TYPE_MAP.put("BigInteger", "NUMERIC");
-        TYPE_MAP.put("LocalDate", "DATE");
-        TYPE_MAP.put("LocalTime", "TIME");
-        TYPE_MAP.put("LocalDateTime", "TIMESTAMP");
-        TYPE_MAP.put("UUID", "UUID");
-    }
+    private static final Map<String, String> TYPE_MAP = TypeMapper.create().typeMap();
 
     public static String resolveType(Field field) {
         Column columnAnnotation = field.getAnnotation(Column.class);
@@ -54,9 +25,7 @@ public abstract class Resolver {
         }
 
         if (isUnsupportedComplexType(field)) {
-            throw new UnsupportedOperationException(
-                    "Complex types like List, Set, and Map are not directly supported."
-            );
+            throw new UnsupportedOperationException("Complex types like List, Set, and Map are not directly supported.");
         }
 
         return "VARCHAR";
