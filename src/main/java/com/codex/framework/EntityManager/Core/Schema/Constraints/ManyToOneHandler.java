@@ -1,23 +1,27 @@
 package com.codex.framework.EntityManager.Core.Schema.Constraints;
 
-import com.codex.framework.EntityManager.Annotations.Id.ID;
-import com.codex.framework.EntityManager.Annotations.Relationship.JoinColumn;
-import com.codex.framework.EntityManager.Core.Schema.SchemaGenerator;
-
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import static com.codex.framework.EntityManager.Core.Schema.Resolver.*;
 
 public class ManyToOneHandler {
+
+    /**
+     * Collects SQL constraints for many-to-one relationships defined in the given entity class.
+     *
+     * @param entity The class representing the entity whose many-to-one constraints are to be collected.
+     * @return A list of SQL queries to add foreign key constraints for the many-to-one relationships.
+     */
 
     public static List<String> collectConstraints(Class<?> entity) {
         List<String> queries = new ArrayList<>();
 
         for (Field field : entity.getDeclaredFields()) {
             if (field.isAnnotationPresent(com.codex.framework.EntityManager.Annotations.Relationship.ManyToOne.class)) {
-                String tableName = SchemaGenerator.getTableName(entity);
+                String tableName = getTableName(entity);
                 String fieldName = resolveFieldName(field);
-                String referencedTable = SchemaGenerator.getTableName(field.getType());
+                String referencedTable = getTableName(field.getType());
                 String referencedPrimaryKey = getPrimaryKeyColumnName(field.getType());
 
                 String query = String.format(
@@ -32,18 +36,5 @@ public class ManyToOneHandler {
         return queries;
     }
 
-    private static String resolveFieldName(Field field) {
-        JoinColumn joinColumn = field.getAnnotation(JoinColumn.class);
-        return (joinColumn != null && !joinColumn.name().isEmpty()) ? joinColumn.name() : field.getName();
-    }
 
-    private static String getPrimaryKeyColumnName(Class<?> entityClass) {
-        for (Field field : entityClass.getDeclaredFields()) {
-            if (field.isAnnotationPresent(ID.class)) {
-                ID idAnnotation = field.getAnnotation(ID.class);
-                return (idAnnotation != null && !idAnnotation.name().isEmpty()) ? idAnnotation.name() : field.getName();
-            }
-        }
-        throw new IllegalArgumentException("No @Id annotation found in " + entityClass.getSimpleName());
-    }
 }

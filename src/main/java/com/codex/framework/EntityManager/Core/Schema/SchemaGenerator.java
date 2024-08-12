@@ -17,6 +17,8 @@ import java.util.Collection;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.codex.framework.EntityManager.Core.Schema.Resolver.getTableName;
+
 public class SchemaGenerator {
 
     private final Collection<Class<?>> entities;
@@ -26,6 +28,12 @@ public class SchemaGenerator {
         this.entities = entities;
         this.conn = DatabaseConnection.getInstance().getConnection();
     }
+
+    /**
+     * Generates the schema for all the provided entities by creating tables and adding constraints.
+     *
+     * @throws SQLException If a database access error occurs.
+     */
 
     public void generateSchema() throws SQLException {
         List<String> tableCreationQueries = new ArrayList<>();
@@ -39,17 +47,20 @@ public class SchemaGenerator {
             constraintQueries.addAll(OneToOneHandler.collectConstraints(entity));
             constraintQueries.addAll(ManyToOneHandler.collectConstraints(entity));
             constraintQueries.addAll(ManyToManyHandler.collectConstraints(entity));
-
         }
 
         executeBatch(tableCreationQueries);
         executeBatch(constraintQueries);
     }
 
-    public static String getTableName(Class<?> entity) {
-        Table tableAnnotation = entity.getAnnotation(Table.class);
-        return (tableAnnotation != null && !tableAnnotation.name().isEmpty()) ? tableAnnotation.name() : entity.getSimpleName();
-    }
+    /**
+     * Builds a SQL query for creating a table based on the entity class and table name.
+     *
+     * @param entity The class representing the entity.
+     * @param tableName The name of the table to be created.
+     * @return A SQL query string for creating the table.
+     * @throws SQLException If an error occurs while processing the field annotations.
+     */
 
     private String buildCreateTableQuery(Class<?> entity, String tableName) throws SQLException {
         StringBuilder query = new StringBuilder(String.format("CREATE TABLE IF NOT EXISTS %s (\n", tableName));
@@ -69,11 +80,26 @@ public class SchemaGenerator {
         return query.toString();
     }
 
+    /**
+     * Builds the SQL definition for a primary key column based on the field's @ID annotation.
+     *
+     * @param field The field representing the primary key.
+     * @return A SQL string defining the primary key column.
+     */
+
     private String buildPrimaryKeyColumn(Field field) {
         ID idAnnotation = field.getAnnotation(ID.class);
         String columnName = (idAnnotation != null && !idAnnotation.name().isEmpty()) ? idAnnotation.name() : field.getName();
         return String.format("\t%s INT PRIMARY KEY,\n", columnName);
     }
+
+    /**
+     * Builds the SQL definition for a column based on the field's @Column annotation.
+     *
+     * @param field The field representing the column.
+     * @return A SQL string defining the column.
+     * @throws SQLException If an error occurs while processing the column annotations.
+     */
 
     private String buildColumnDefinition(Field field) throws SQLException {
         Column column = field.getAnnotation(Column.class);
@@ -95,12 +121,25 @@ public class SchemaGenerator {
         );
     }
 
+    /**
+     * Removes the trailing comma from a SQL query string.
+     *
+     * @param query The StringBuilder object containing the SQL query.
+     */
+
     private void removeTrailingComma(StringBuilder query) {
         int lastCommaIndex = query.lastIndexOf(",");
         if (lastCommaIndex != -1) {
             query.deleteCharAt(lastCommaIndex);
         }
     }
+
+    /**
+     * Executes a batch of SQL queries.
+     *
+     * @param queries A list of SQL query strings to be executed.
+     * @throws SQLException If an error occurs while executing the queries.
+     */
 
     private void executeBatch(List<String> queries) throws SQLException {
         try (Statement stmt = conn.createStatement()) {
