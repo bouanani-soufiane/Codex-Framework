@@ -28,6 +28,10 @@ Codex is a lightweight Java framework that provides dependency injection, custom
 
 ## Usage
 
+| Entity Manager Process | IOC Context                            |
+|------------------------|----------------------------------------|
+| ![entityManager process](./images/image.webp) | ![](./images/59jj5b8mfj1c44672i4a.png) |
+
 ### Dependency Injection
 
 Codex uses [Burningwave](https://github.com/burningwave/core) for classpath scanning to enable dependency injection.
