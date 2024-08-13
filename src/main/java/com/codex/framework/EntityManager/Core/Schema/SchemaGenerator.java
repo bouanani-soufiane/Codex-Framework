@@ -8,6 +8,7 @@ import com.codex.framework.EntityManager.Core.Schema.Constraints.OneToOneHandler
 import com.codex.framework.EntityManager.Core.connection.DatabaseConnection;
 import java.lang.reflect.Field;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collection;
@@ -26,12 +27,69 @@ public class SchemaGenerator {
     }
 
     /**
+     * Retrieves all constraints for a given table in the schema.
+     *
+     * @param tableName The name of the table.
+     * @return A list of constraint names for the given table.
+     * @throws SQLException If a database access error occurs.
+     */
+
+    private List<String> getTableConstraints(String tableName) throws SQLException {
+        List<String> constraints = new ArrayList<>();
+
+        String schemaName = "public";
+
+        String query = String.format(
+                "SELECT con.conname " +
+                        "FROM pg_catalog.pg_constraint con " +
+                        "INNER JOIN pg_catalog.pg_class rel ON rel.oid = con.conrelid " +
+                        "INNER JOIN pg_catalog.pg_namespace nsp ON nsp.oid = connamespace " +
+                        "WHERE nsp.nspname = '%s' AND rel.relname = '%s';",
+                schemaName, tableName
+        );
+
+        try (Statement stmt = conn.createStatement()) {
+            ResultSet rs = stmt.executeQuery(query);
+            while (rs.next()) {
+                constraints.add(rs.getString("conname"));
+            }
+        }
+
+        return constraints;
+    }
+
+    /**
+     * Drops all constraints and tables before generating the new schema.
+     *
+     * @throws SQLException If a database access error occurs.
+     */
+
+    private void dropConstraintsAndTables() throws SQLException {
+        List<String> dropConstraintQueries = new ArrayList<>();
+        List<String> dropTableQueries = new ArrayList<>();
+
+        for (Class<?> entity : entities) {
+            String tableName = getTableName(entity);
+            List<String> constraints = getTableConstraints(tableName);
+
+            for (String constraint : constraints) {
+                dropConstraintQueries.add(String.format("ALTER TABLE %s DROP CONSTRAINT %s;", tableName, constraint));
+            }
+            dropTableQueries.add(String.format("DROP TABLE IF EXISTS %s CASCADE;", tableName));
+        }
+
+        executeBatch(dropConstraintQueries);
+        executeBatch(dropTableQueries);
+    }
+
+    /**
      * Generates the schema for all the provided entities by creating tables and adding constraints.
      *
      * @throws SQLException If a database access error occurs.
      */
 
     public void generateSchema() throws SQLException {
+        dropConstraintsAndTables();
         List<String> tableCreationQueries = new ArrayList<>();
         List<String> constraintQueries = new ArrayList<>();
 

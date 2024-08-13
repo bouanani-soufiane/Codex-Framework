@@ -20,7 +20,7 @@ public class ProcessManager {
         this.annotationScanner = new AnnotationScanner(Entity.class);
         this.entities = annotationScanner.find("com/codex");
         this.schemaGenerator = new SchemaGenerator(entities);
-        this.injector = new Injector();  // Initialize the Injector
+        this.injector = new Injector();
     }
 
     /** Initializes the framework by binding interfaces to their implementations and injecting dependencies into components. */
@@ -29,7 +29,7 @@ public class ProcessManager {
     }
 
     public void run() throws SQLException, IllegalAccessException, NoSuchMethodException {
-        initFramework(); // Initialize the Injector
+        initFramework(); 
         this.schemaGenerator.generateSchema();
     }
 
