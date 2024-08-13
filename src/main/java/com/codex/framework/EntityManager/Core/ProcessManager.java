@@ -18,23 +18,17 @@ public class ProcessManager {
     public ProcessManager(Class<?> application) throws SQLException {
         this.application = application;
         this.annotationScanner = new AnnotationScanner(Entity.class);
-        this.entities = annotationScanner.find("com/codex");
+        this.entities = annotationScanner.find(application.getPackageName().replace("." ,"/"));
         this.schemaGenerator = new SchemaGenerator(entities);
-        this.injector = new Injector();
+        this.injector = Injector.getInstance();
     }
 
-    /** Initializes the framework by binding interfaces to their implementations and injecting dependencies into components. */
     private void initFramework() throws IllegalAccessException, NoSuchMethodException {
         injector.initFramework(application);
     }
 
     public void run() throws SQLException, IllegalAccessException, NoSuchMethodException {
-        initFramework(); 
+        initFramework();
         this.schemaGenerator.generateSchema();
-    }
-
-    /** Provides access to the Injector instance. */
-    public Injector getInjector() {
-        return injector;
     }
 }

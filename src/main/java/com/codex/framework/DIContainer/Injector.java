@@ -12,22 +12,30 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Parameter;
 import java.util.*;
 
+@Component
 public class Injector {
 
-    AnnotationScanner scanner;
-    Utils utils;
-    Collection<Class<?>> components;
+    private AnnotationScanner scanner;
+    private Utils utils;
+    private Collection<Class<?>> components;
 
     private final Map<Class<?>, List<Class<?>>> bindingMap = new HashMap<>();
     private final Map<Class<?>, Object> instances = new HashMap<>();
 
-    public Injector() {
+    private static Injector instance;
+
+    private Injector() {
         this.utils = new Utils();
         this.scanner = new AnnotationScanner(Component.class);
         this.components = scanner.find("com/codex");
     }
 
-    /**  Initializes the framework by binding interfaces to their implementations and injecting dependencies into components.  */
+    public static synchronized Injector getInstance() {
+        if (instance == null) {
+            instance = new Injector();
+        }
+        return instance;
+    }
 
     public void initFramework(Class<?> mainClass) throws IllegalAccessException, NoSuchMethodException {
         this.bindInterfaceToClassImpls(components);
@@ -35,7 +43,6 @@ public class Injector {
     }
 
     /**  Iterates through components to initialize and inject dependencies into each one. */
-
     private void inject(Collection<Class<?>> components) throws NoSuchMethodException {
         for (Class<?> component : components) {
             initializeBean(component);
@@ -43,7 +50,6 @@ public class Injector {
     }
 
     /**  Initializes a component by creating its instance and injecting dependencies into its fields. */
-
     private void initializeBean(Class<?> component) throws NoSuchMethodException {
         Constructor<?>[] constructors = component.getDeclaredConstructors();
         Field[] fields = component.getDeclaredFields();
@@ -62,8 +68,7 @@ public class Injector {
         }
     }
 
-    /** Creates an instance of a component using its constructor, resolving any dependencies required by the constructor.  */
-
+    /** Creates an instance of a component using its constructor, resolving any dependencies required by the constructor. */
     private void createInstance(Constructor<?> constructor) throws NoSuchMethodException {
         Object[] dependencies = null;
 
@@ -89,7 +94,6 @@ public class Injector {
     }
 
     /**  Resolves a dependency based on the type and optional qualifier, returning the appropriate implementation. */
-
     private Object resolveDependency(Class<?> type, Qualifier qualifier) {
         if (!type.isInterface()) {
             return getOrCreate(type);
@@ -111,13 +115,12 @@ public class Injector {
                 }
                 return getOrCreate(qualifiedClass);
             } else {
-                return getOrCreate(implementations.getFirst());
+                return getOrCreate(implementations.get(0));
             }
         }
     }
 
     /**  Injects a dependency into a field of a component. */
-
     private void injectField(Field field, Object instance) {
         try {
             field.setAccessible(true);
@@ -129,7 +132,6 @@ public class Injector {
     }
 
     /**  Returns an existing instance of a class or creates a new one if not already present in the cache. */
-
     private Object getOrCreate(Class<?> clazz) {
         if (!instances.containsKey(clazz)) {
             try {
@@ -143,7 +145,6 @@ public class Injector {
     }
 
     /**  Binds interfaces to their implementing classes based on the components found by the scanner. */
-
     private void bindInterfaceToClassImpls(Collection<Class<?>> components) {
         for (Class<?> component : components) {
             Class<?>[] interfaces = component.getInterfaces();
@@ -151,18 +152,13 @@ public class Injector {
                 bindingMap.put(component, Collections.singletonList(component));
             } else {
                 for (Class<?> i : interfaces) {
-                    if (!bindingMap.containsKey(i)) {
-                        bindingMap.put(i, new ArrayList<>(Collections.singletonList(component)));
-                    } else {
-                        bindingMap.get(i).add(component);
-                    }
+                    bindingMap.computeIfAbsent(i, k -> new ArrayList<>()).add(component);
                 }
             }
         }
     }
 
     /**  Returns the cached instance of a class. */
-
     public Object getBean(Class<?> clazz) {
         return instances.get(clazz);
     }
