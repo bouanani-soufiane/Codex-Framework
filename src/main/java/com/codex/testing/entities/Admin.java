@@ -17,10 +17,10 @@ public class Admin {
     private String id;
     @Column
     private String name;
-    @OneToOne(cascade = "ALL")
+    @ManyToOne(cascade = "PERSIST")
     private Employee employee_id;
 
-    @ManyToMany()
+    @ManyToMany(cascade = "REFRESH")
     @JoinTable(
             name = "admin_roles",
             joinColumns = @JoinColumn(name = "admin_id"),

@@ -1,5 +1,7 @@
 package com.codex.framework.EntityManager.Core.Schema.Constraints;
 
+import com.codex.framework.EntityManager.Annotations.Relationship.ManyToOne;
+
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,15 +20,24 @@ public class ManyToOneHandler {
         List<String> queries = new ArrayList<>();
 
         for (Field field : entity.getDeclaredFields()) {
-            if (field.isAnnotationPresent(com.codex.framework.EntityManager.Annotations.Relationship.ManyToOne.class)) {
+            if (field.isAnnotationPresent(ManyToOne.class)) {
+                ManyToOne manyOne = field.getAnnotation(ManyToOne.class);
                 String tableName = getTableName(entity);
                 String fieldName = resolveFieldName(field);
                 String referencedTable = getTableName(field.getType());
                 String referencedPrimaryKey = getPrimaryKeyColumnName(field.getType());
+                String cascadeType = manyOne.cascade();
 
                 String query = String.format(
-                        "ALTER TABLE %s ADD COLUMN %s BIGINT, ADD CONSTRAINT fk_%s FOREIGN KEY (%s) REFERENCES %s(%s);",
-                        tableName, fieldName, fieldName, fieldName, referencedTable, referencedPrimaryKey
+                        """
+                                ALTER TABLE %s\s
+                                \tADD COLUMN %s BIGINT,\s
+                                \tADD CONSTRAINT fk_%s FOREIGN KEY (%s)\s
+                                \tREFERENCES %s(%s) %s;
+                                """,
+
+                        tableName, fieldName, fieldName, fieldName, referencedTable, referencedPrimaryKey,
+                        CascadeType.valueOf(cascadeType.toUpperCase()).toSql()
                 );
 
                 queries.add(query);

@@ -6,7 +6,7 @@ import com.codex.framework.EntityManager.Annotations.Id.ID;
 
 @Entity
 public class Employee {
-    @ID()
+    @ID
     private int id;
     @Column(name = "em_name" )
     private String name;

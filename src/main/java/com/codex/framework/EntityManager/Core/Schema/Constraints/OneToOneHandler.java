@@ -30,10 +30,13 @@ public class OneToOneHandler {
 
 
                 String query = String.format(
-                        "ALTER TABLE %s \n" +
-                                "\tADD COLUMN %s BIGINT, \n" +
-                                "\tADD CONSTRAINT fk_%s FOREIGN KEY (%s) \n" +
-                                "\tREFERENCES %s(%s) %s;\n",
+                        """
+                                ALTER TABLE %s\s
+                                \tADD COLUMN %s BIGINT,\s
+                                \tADD CONSTRAINT fk_%s FOREIGN KEY (%s)\s
+                                \tREFERENCES %s(%s) %s;
+                                """,
+
                         tableName, fieldName, fieldName, fieldName, referencedTable, referencedPrimaryKey,
                         CascadeType.valueOf(cascadeType.toUpperCase()).toSql()
                 );

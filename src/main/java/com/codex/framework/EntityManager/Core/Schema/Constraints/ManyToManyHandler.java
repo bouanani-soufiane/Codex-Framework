@@ -29,7 +29,7 @@ public class ManyToManyHandler {
                     String[] inverseJoinColumnNames = extractColumnNames(joinTable.inverseJoinColumns());
                     Class<?> fieldClass = getGenericType(field);
 
-                    String query = buildJoinTableQuery(joinTableName, joinColumnNames, inverseJoinColumnNames , entity ,  fieldClass);
+                    String query = buildJoinTableQuery(joinTableName, joinColumnNames, inverseJoinColumnNames , entity ,  fieldClass,field);
                     queries.add(query);
                 }
             }
@@ -49,9 +49,10 @@ public class ManyToManyHandler {
      * @return A SQL query string for creating the join table with the appropriate foreign key constraints.
      */
 
-    private static String buildJoinTableQuery(String joinTableName, String[] joinColumnNames, String[] inverseJoinColumnNames , Class<?> entity , Class<?> field) {
+    private static String buildJoinTableQuery(String joinTableName, String[] joinColumnNames, String[] inverseJoinColumnNames , Class<?> entity , Class<?> fieldClass ,Field field) {
         StringBuilder query = new StringBuilder(String.format("CREATE TABLE IF NOT EXISTS %s (\n", joinTableName));
-
+        ManyToMany manytomany = field.getAnnotation(ManyToMany.class);
+        String cascadeType = manytomany.cascade();
         for (String columnName : joinColumnNames) {
             query.append(String.format("\t%s BIGINT,\n", columnName));
         }
@@ -64,15 +65,19 @@ public class ManyToManyHandler {
                 joinColumnNames[0],
                 inverseJoinColumnNames[0]
         ));
-        query.append(String.format("\tFOREIGN KEY (%s) REFERENCES %s(%s),\n",
+        query.append(String.format("\tFOREIGN KEY (%s) REFERENCES %s(%s) %s,\n",
                 joinColumnNames[0],
                 getTableName(entity),
-                getPrimaryKeyColumnName(entity)
+                getPrimaryKeyColumnName(entity),
+                CascadeType.valueOf(cascadeType.toUpperCase()).toSql()
+
         ));
-        query.append(String.format("\tFOREIGN KEY (%s) REFERENCES %s(%s)\n",
+        query.append(String.format("\tFOREIGN KEY (%s) REFERENCES %s(%s) %s\n",
                 inverseJoinColumnNames[0],
-                getTableName(field),
-                getPrimaryKeyColumnName(field)
+                getTableName(fieldClass),
+                getPrimaryKeyColumnName(fieldClass),
+                CascadeType.valueOf(cascadeType.toUpperCase()).toSql()
+
         ));
         query.append(");");
 
