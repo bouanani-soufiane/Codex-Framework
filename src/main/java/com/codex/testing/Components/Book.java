@@ -8,13 +8,10 @@
     @Component
     public class Book implements IBook {
         private IUser user;
-        private Pay pay;
-        public String title = "kitab 3ajib";
-        @Autowired
 
+        @Autowired
         @Qualifier(User2.class)
-        public Book(IUser user ,Pay pay   ){
-            this.pay = pay;
+        public Book(IUser user){
             this.user = user;
         }
 

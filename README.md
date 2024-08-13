@@ -1,6 +1,8 @@
 # Codex Framework
 
-Codex is a lightweight Java framework that provides dependency injection, custom ORM, data mapping, and automated database table creation to facilitate the development of scalable and maintainable applications.
+## Overview
+
+The Codex Framework is a comprehensive Java framework designed to streamline application development by offering robust dependency injection, custom ORM, data mapping, and automated database schema generation. It integrates annotation-based configuration to simplify entity management and dependency handling.
 
 ## Features
 
@@ -8,79 +10,168 @@ Codex is a lightweight Java framework that provides dependency injection, custom
 - **Custom ORM**: Simplify database interactions with an intuitive ORM.
 - **Data Mapping**: Effortlessly map database tables to Java objects.
 - **Automated Table Creation**: Automatically generate database tables from your Java classes.
-
-## Getting Started
-
-### Prerequisites
-
-- Java 8 or higher
-- Maven
-
-### Installation
-
-1. Clone the repository:
-
-   ```bash
-   git clone git@github.com:bouanani-soufiane/Codex-Framework.git
-   cd codex
-   ```
-
+- **Annotation-Based Configuration**: Configure your entities and dependencies using annotations for cleaner and more maintainable code.
 
 ## Usage
 
-| Entity Manager Process | IOC Context                            |
-|------------------------|----------------------------------------|
-| ![entityManager process](./images/image.webp) | ![](./images/59jj5b8mfj1c44672i4a.png) |
+### Main Application
+
+Create a main class and use the `Kernel.run()` method to start your application:
+
+```java
+import com.codex.framework.Kernel;
+
+public class Main {
+
+    public static void main(String[] args) throws Exception {
+        Kernel.run(Main.class);
+    }
+}
+```
 
 ### Dependency Injection
 
-Codex uses [Burningwave](https://github.com/burningwave/core) for classpath scanning to enable dependency injection.
-
-### Example
+Use annotations to define and inject dependencies:
 
 ```java
-// soon..
+package com.codex.testing.Components;
+
+import com.codex.framework.DIContainer.annotations.Autowired;
+import com.codex.framework.DIContainer.annotations.Component;
+import com.codex.framework.DIContainer.annotations.Qualifier;
+import com.codex.testing.Components.interfaces.IBook;
+import com.codex.testing.Components.interfaces.IUser;
+
+@Component
+public class Book implements IBook {
+    private IUser user;
+
+    @Autowired
+    @Qualifier(User2.class)
+    public Book(IUser user) {
+        this.user = user;
+    }
+
+    @Override
+    public void index() {
+        System.out.println(user.getName());
+    }
+}
 ```
 
-### Resources that helps me
+### Entity Creation
 
-- This [article](https://dev.to/jjbrt/how-to-create-your-own-dependency-injection-framework-in-java-4eaj) was very helpful in the development of Codex dependency injection.
+Define entities using annotations:
 
-## How to Make EntityManager
+```java
+package com.codex.testing.entities;
 
-### 1. Start with Schema Generation:
-- **Step 1.1:** Implement the `SchemaGenerator` to create tables without any constraints initially.
-- **Step 1.2:** Use the `ConstraintManager` to add foreign keys and other constraints after the tables have been created.
+import com.codex.framework.EntityManager.Annotations.Column.Column;
+import com.codex.framework.EntityManager.Annotations.Entity.Entity;
+import com.codex.framework.EntityManager.Annotations.Entity.Table;
+import com.codex.framework.EntityManager.Annotations.Id.ID;
+import com.codex.framework.EntityManager.Annotations.Relationship.*;
 
-### 2. Develop Query Execution:
-- **Step 2.1:** Implement the `CRUDHandler` to handle basic Create, Read, Update, and Delete operations.
-- **Step 2.2:** Extend functionality by developing the `QueryExecutor` to support custom queries and more complex database interactions.
+import java.util.Set;
 
-### 3. Build Entity Mapping:
-- **Step 3.1:** Create the `EntityMapper` to map database rows to entity objects.
-- **Step 3.2:** Implement the `RowMapper` to handle the conversion between entities and their corresponding database rows.
+@Entity
+@Table(name = "Administrator")
+public class Admin {
+    @ID
+    private String id;
+    
+    @Column
+    private String name;
+    
+    @ManyToOne(cascade = "PERSIST")
+    private Employee employee_id;
 
-### 4. Integrate Transaction Management:
-- **Step 4.1:** Develop the `TransactionManager` to ensure that all database operations are atomic, consistent, and properly isolated.
-- **Step 4.2:** Implement mechanisms to handle transaction rollbacks in case of errors or failures.
+    @ManyToMany(cascade = "REFRESH")
+    @JoinTable(
+            name = "admin_roles",
+            joinColumns = @JoinColumn(name = "admin_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private Set<Roles> roles;
+}
 
-### 5. Handle Errors Gracefully:
-- **Step 5.1:** Implement robust error-handling mechanisms to manage exceptions and ensure the system remains stable.
-- **Step 5.2:** Ensure that any foreign key constraint violations and other common database errors are caught and managed appropriately.
+package com.codex.testing.entities;
 
----
+import com.codex.framework.EntityManager.Annotations.Column.Column;
+import com.codex.framework.EntityManager.Annotations.Entity.Entity;
+import com.codex.framework.EntityManager.Annotations.Id.ID;
+
+@Entity
+public class Employee {
+    @ID
+    private int id;
+    
+    @Column(name = "em_name")
+    private String name;
+}
+
+package com.codex.testing.entities;
+
+import com.codex.framework.EntityManager.Annotations.Column.Column;
+import com.codex.framework.EntityManager.Annotations.Entity.Entity;
+import com.codex.framework.EntityManager.Annotations.Id.ID;
+
+@Entity
+public class Roles {
+    @ID
+    private String id;
+
+    @Column
+    private String name;
+}
+```
+
+## Installation
+
+1. Clone the repository:
+
+    ```bash
+    git clone git@github.com:bouanani-soufiane/Codex-Framework.git
+    ```
+
+2. Navigate to the project directory:
+
+    ```bash
+    cd Codex-Framework
+    ```
+
+3. Install the framework to your local Maven repository:
+
+    ```bash
+    mvn clean install
+    ```
+
+4. Add the following dependency to your project's `pom.xml`:
+
+    ```xml
+   <dependency>
+       <groupId>com.codex</groupId>
+       <artifactId>Codex</artifactId>
+       <version>1.0-SNAPSHOT</version>
+   </dependency>
+    ```
+
+## Structure
+
+| Entity Manager Process                     | IOC Context                            |
+|--------------------------------------------|----------------------------------------|
+| ![entityManager process](./images/image.webp) | ![](./images/59jj5b8mfj1c44672i4a.png) |
+
 
 ## Contributing
 
-We welcome contributions to this project. Please follow these steps:
-1. Fork the repository.
-2. Create a new branch (`git checkout -b feature/your-feature-name`).
-3. Commit your changes (`git commit -m 'Add some feature'`).
-4. Push to the branch (`git push origin feature/your-feature-name`).
-5. Open a pull request.
+- Fork the repository and create a new branch.
+- Write clear and concise commit messages.
+- Ensure all tests pass before submitting a pull request.
+- Follow the project's coding standards and guidelines.
 
-Please ensure your code follows our coding standards and includes tests for new features.
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
-
-By Bouanani Soufiane
