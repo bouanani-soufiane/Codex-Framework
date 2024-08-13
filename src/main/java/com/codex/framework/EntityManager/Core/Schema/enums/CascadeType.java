@@ -1,4 +1,4 @@
-package com.codex.framework.EntityManager.Core.Schema.Constraints;
+package com.codex.framework.EntityManager.Core.Schema.enums;
 
 public enum CascadeType {
     ALL,

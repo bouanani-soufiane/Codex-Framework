@@ -10,6 +10,6 @@ public @interface GeneratedValue {
     GenerationType strategy() default GenerationType.AUTO;
 
     enum GenerationType {
-        AUTO, IDENTITY, SEQUENCE, TABLE
+        AUTO, IDENTITY, SEQUENCE
     }
 }
