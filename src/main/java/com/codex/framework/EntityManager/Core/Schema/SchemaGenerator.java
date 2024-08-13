@@ -2,6 +2,8 @@ package com.codex.framework.EntityManager.Core.Schema;
 
 import com.codex.framework.EntityManager.Annotations.Column.Column;
 import com.codex.framework.EntityManager.Annotations.Id.ID;
+import com.codex.framework.EntityManager.Core.Exceptions.SchemaGenerationException;
+import com.codex.framework.EntityManager.Core.Exceptions.QueryExecutionException;
 import com.codex.framework.EntityManager.Core.Schema.Constraints.ManyToManyHandler;
 import com.codex.framework.EntityManager.Core.Schema.Constraints.ManyToOneHandler;
 import com.codex.framework.EntityManager.Core.Schema.Constraints.OneToOneHandler;
@@ -11,8 +13,8 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import static com.codex.framework.EntityManager.Core.Schema.Resolver.getTableName;
 
@@ -21,9 +23,13 @@ public class SchemaGenerator {
     private final Collection<Class<?>> entities;
     private final Connection conn;
 
-    public SchemaGenerator(Collection<Class<?>> entities) throws SQLException {
+    public SchemaGenerator(Collection<Class<?>> entities) throws SchemaGenerationException {
         this.entities = entities;
-        this.conn = DatabaseConnection.getInstance().getConnection();
+        try {
+            this.conn = DatabaseConnection.getInstance().getConnection();
+        } catch (SQLException e) {
+            throw new SchemaGenerationException("Error getting database connection", e);
+        }
     }
 
     /**
@@ -31,10 +37,10 @@ public class SchemaGenerator {
      *
      * @param tableName The name of the table.
      * @return A list of constraint names for the given table.
-     * @throws SQLException If a database access error occurs.
+     * @throws SchemaGenerationException If a database access error occurs.
      */
 
-    private List<String> getTableConstraints(String tableName) throws SQLException {
+    private List<String> getTableConstraints(String tableName) throws SchemaGenerationException {
         List<String> constraints = new ArrayList<>();
 
         String schemaName = "public";
@@ -53,6 +59,8 @@ public class SchemaGenerator {
             while (rs.next()) {
                 constraints.add(rs.getString("conname"));
             }
+        } catch (SQLException e) {
+            throw new SchemaGenerationException("Error retrieving table constraints", e);
         }
 
         return constraints;
@@ -61,10 +69,10 @@ public class SchemaGenerator {
     /**
      * Drops all constraints and tables before generating the new schema.
      *
-     * @throws SQLException If a database access error occurs.
+     * @throws SchemaGenerationException If a database access error occurs.
      */
 
-    private void dropConstraintsAndTables() throws SQLException {
+    private void dropConstraintsAndTables() throws SchemaGenerationException {
         List<String> dropConstraintQueries = new ArrayList<>();
         List<String> dropTableQueries = new ArrayList<>();
 
@@ -78,24 +86,33 @@ public class SchemaGenerator {
             dropTableQueries.add(String.format("DROP TABLE IF EXISTS %s CASCADE;", tableName));
         }
 
-        executeBatch(dropConstraintQueries);
-        executeBatch(dropTableQueries);
+        try {
+            executeBatch(dropConstraintQueries);
+            executeBatch(dropTableQueries);
+        } catch (QueryExecutionException e) {
+            throw new SchemaGenerationException("Error dropping constraints and tables", e);
+        }
     }
 
     /**
      * Generates the schema for all the provided entities by creating tables and adding constraints.
      *
-     * @throws SQLException If a database access error occurs.
+     * @throws SchemaGenerationException If a database access error occurs.
      */
 
-    public void generateSchema() throws SQLException {
+    public void generateSchema() throws SchemaGenerationException {
         dropConstraintsAndTables();
         List<String> tableCreationQueries = new ArrayList<>();
         List<String> constraintQueries = new ArrayList<>();
 
         for (Class<?> entity : entities) {
             String tableName = getTableName(entity);
-            String tableCreationQuery = buildCreateTableQuery(entity, tableName);
+            String tableCreationQuery;
+            try {
+                tableCreationQuery = buildCreateTableQuery(entity, tableName);
+            } catch (SQLException e) {
+                throw new SchemaGenerationException("Error building create table query for " + tableName, e);
+            }
             tableCreationQueries.add(tableCreationQuery);
 
             constraintQueries.addAll(OneToOneHandler.collectConstraints(entity));
@@ -103,8 +120,12 @@ public class SchemaGenerator {
             constraintQueries.addAll(ManyToManyHandler.collectConstraints(entity));
         }
 
-        executeBatch(tableCreationQueries);
-        executeBatch(constraintQueries);
+        try {
+            executeBatch(tableCreationQueries);
+            executeBatch(constraintQueries);
+        } catch (QueryExecutionException e) {
+            throw new SchemaGenerationException("Error generating schema", e);
+        }
     }
 
     /**
@@ -192,10 +213,10 @@ public class SchemaGenerator {
      * Executes a batch of SQL queries.
      *
      * @param queries A list of SQL query strings to be executed.
-     * @throws SQLException If an error occurs while executing the queries.
+     * @throws QueryExecutionException If an error occurs while executing the queries.
      */
 
-    private void executeBatch(List<String> queries) throws SQLException {
+    private void executeBatch(List<String> queries) throws QueryExecutionException {
         try (Statement stmt = conn.createStatement()) {
             for (String query : queries) {
                 stmt.addBatch(query);
@@ -207,7 +228,7 @@ public class SchemaGenerator {
             }
         } catch (SQLException e) {
             System.err.println("Error executing batch: " + e.getMessage());
-            throw e;
+            throw new QueryExecutionException("Error executing batch queries", e);
         }
     }
 }
