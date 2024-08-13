@@ -12,6 +12,45 @@ The Codex Framework is a comprehensive Java framework designed to streamline app
 - **Automated Table Creation**: Automatically generate database tables from your Java classes.
 - **Annotation-Based Configuration**: Configure your entities and dependencies using annotations for cleaner and more maintainable code.
 
+## Installation
+
+1. Clone the repository:
+
+    ```bash
+    git clone git@github.com:bouanani-soufiane/Codex-Framework.git
+    ```
+
+2. Navigate to the project directory:
+
+    ```bash
+    cd Codex-Framework
+    ```
+
+3. Install the framework to your local Maven repository:
+
+    ```bash
+    mvn clean install
+    ```
+
+4. Add the following dependency to your project's `pom.xml`:
+
+    ```xml
+   <dependency>
+       <groupId>com.codex</groupId>
+       <artifactId>Codex</artifactId>
+       <version>1.0-SNAPSHOT</version>
+   </dependency>
+    ```
+5. Add .env file with your custom database config
+   ```env
+      DB_URL=jdbc:postgresql://localhost:5432/yourDataBaseName
+      DB_USERNAME=
+      DB_PASSWORD=
+      DB_DRIVER=org.postgresql.Driver
+   ```
+
+
+
 ## Usage
 
 ### Main Application
@@ -125,36 +164,6 @@ public class Roles {
     private String name;
 }
 ```
-
-## Installation
-
-1. Clone the repository:
-
-    ```bash
-    git clone git@github.com:bouanani-soufiane/Codex-Framework.git
-    ```
-
-2. Navigate to the project directory:
-
-    ```bash
-    cd Codex-Framework
-    ```
-
-3. Install the framework to your local Maven repository:
-
-    ```bash
-    mvn clean install
-    ```
-
-4. Add the following dependency to your project's `pom.xml`:
-
-    ```xml
-   <dependency>
-       <groupId>com.codex</groupId>
-       <artifactId>Codex</artifactId>
-       <version>1.0-SNAPSHOT</version>
-   </dependency>
-    ```
 
 ## Structure
 

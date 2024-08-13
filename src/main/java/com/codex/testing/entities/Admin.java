@@ -10,8 +10,7 @@ import com.codex.framework.EntityManager.Annotations.Relationship.*;
 import java.util.Set;
 
 
-@Entity
-@Table(name = "Administrator")
+
 public class Admin {
     @ID
     private String id;

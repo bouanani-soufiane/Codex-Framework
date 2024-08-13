@@ -89,6 +89,7 @@ public class SchemaGenerator {
         try {
             executeBatch(dropConstraintQueries);
             executeBatch(dropTableQueries);
+
         } catch (QueryExecutionException e) {
             throw new SchemaGenerationException("Error dropping constraints and tables", e);
         }
