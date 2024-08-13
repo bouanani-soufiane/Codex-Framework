@@ -1,14 +1,11 @@
-
 package com.codex.framework.EntityManager.Core.Schema;
 
 import com.codex.framework.EntityManager.Annotations.Column.Column;
-import com.codex.framework.EntityManager.Annotations.Entity.Table;
 import com.codex.framework.EntityManager.Annotations.Id.ID;
 import com.codex.framework.EntityManager.Core.Schema.Constraints.ManyToManyHandler;
 import com.codex.framework.EntityManager.Core.Schema.Constraints.ManyToOneHandler;
 import com.codex.framework.EntityManager.Core.Schema.Constraints.OneToOneHandler;
 import com.codex.framework.EntityManager.Core.connection.DatabaseConnection;
-
 import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -16,7 +13,6 @@ import java.sql.Statement;
 import java.util.Collection;
 import java.util.ArrayList;
 import java.util.List;
-
 import static com.codex.framework.EntityManager.Core.Schema.Resolver.getTableName;
 
 public class SchemaGenerator {

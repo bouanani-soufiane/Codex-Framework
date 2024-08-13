@@ -12,7 +12,7 @@
         public String title = "kitab 3ajib";
         @Autowired
 
-        @Qualifier(User.class)
+        @Qualifier(User2.class)
         public Book(IUser user ,Pay pay   ){
             this.pay = pay;
             this.user = user;
